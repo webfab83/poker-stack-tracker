@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1420">
+<title>STACK — Suivi poker</title>
+<meta name="description" content="Suivi de stack en tournoi, graphique jetons ou BB, notes et sauvegardes. Fonctionne hors connexion après installation.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="STACK">
+<style>
+:root{color-scheme:dark;--bg:#09111d;--panel:#101d2c;--panel2:#142438;--line:#284058;--txt:#f3f7fa;--sub:#9cb0c3;--green:#2dd4a7;--red:#ff777a;--blue:#7db7ff;--gold:#f9d484}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#162c3c 0,#09111d 55%);color:var(--txt);font-family:system-ui,-apple-system,Roboto,"Segoe UI",sans-serif;min-height:100dvh}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.36;cursor:not-allowed}.container{width:min(100%,790px);margin:auto;padding:16px 14px max(24px,env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}.brand{display:flex;gap:12px;align-items:center}.chip{width:42px;height:42px;border:3px dashed #eacb74;border-radius:100%;display:grid;place-items:center;background:#6d1837;color:#fff;font-size:23px;box-shadow:0 0 0 2px #301020 inset}.brand-title{font-weight:800;font-size:1.24rem;letter-spacing:.2px}.brand-sub{color:var(--sub);font-size:.76rem}h1,h2,p{margin:0}.ghost{color:var(--txt);background:transparent;border:1px solid var(--line);border-radius:12px;padding:11px 13px;white-space:nowrap}.ghost:hover,.ghost:focus-visible{background:#1a3045}.panel{background:linear-gradient(165deg,#142336,#101c2b);border:1px solid #294159;border-radius:20px;padding:17px;margin:13px 0;box-shadow:0 9px 32px #00000028}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.space{justify-content:space-between}.kicker{font-size:.74rem;letter-spacing:1.15px;color:var(--sub);font-weight:750;text-transform:uppercase}.stack{font-size:clamp(2.4rem,12vw,4.3rem);font-weight:850;letter-spacing:-2px;line-height:1.2;overflow-wrap:anywhere}.unit{font-weight:600;letter-spacing:0;color:var(--sub);font-size:.85rem}.bb-pill{border:1px solid #355a57;color:var(--green);padding:8px 11px;background:#14332f;border-radius:100px;font-weight:800;font-size:.92rem}.micro{font-size:.79rem;color:var(--sub);margin-top:8px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:19px}.stat{background:#0e1b29;border:1px solid #20364a;border-radius:13px;padding:10px}.stat .val{font-size:1.04rem;font-weight:800;margin-top:4px;overflow-wrap:anywhere}.pos{color:var(--green)!important}.neg{color:var(--red)!important}.info{color:var(--sub)!important}.small{font-size:.76rem;color:var(--sub)}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px}.panel-head h2{font-size:1.09rem}.input-wrap{margin:13px 0 14px}label{display:block;font-weight:650;font-size:.88rem;margin-bottom:7px;color:#cfdfeb}input,select,textarea{width:100%;border-radius:12px;border:1px solid #39536b;background:#0b1726;color:white;outline:none;padding:12px 13px;min-height:48px}textarea{min-height:94px;resize:vertical;line-height:1.5}input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 2px #7db7ff33}.biginput{font-size:1.5rem;font-weight:750;text-align:center;min-height:60px}.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.action{border:0;border-radius:14px;min-height:68px;color:#091421;font-size:1.04rem;font-weight:850;padding:10px}.gain{background:var(--green)}.loss{background:var(--red)}.action small{font-size:.76rem;font-weight:600;display:block;opacity:.8}.full{width:100%}.skip{width:100%;margin-top:10px;background:#1d3448;border:1px solid #3c5265;color:#f4f8fa;border-radius:12px;min-height:43px}.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:9px}.columns>*{min-width:0}.inline{display:flex;gap:8px;align-items:center}.inline>*{min-width:0}.mini-btn{border:1px solid #3d6070;background:#244352;color:white;border-radius:11px;padding:11px 14px;white-space:nowrap}.mini-btn:focus-visible,.action:focus-visible,.skip:focus-visible{outline:3px solid white;outline-offset:2px}details{margin-top:9px}summary{cursor:pointer;color:var(--blue);font-size:.86rem}details[open] summary{margin-bottom:14px}.divider{height:1px;background:var(--line);margin:13px 0}canvas{display:block;width:100%;height:206px} .chartbox{position:relative;background:#0c1826;border-radius:12px;padding:7px;border:1px solid #203246}.items{display:grid;gap:8px}.history-item{display:grid;grid-template-columns:35px 1fr auto auto;gap:9px;align-items:center;border:1px solid #253c52;background:#0c1a28;border-radius:12px;padding:10px}.index{font-size:.79rem;color:var(--sub)}.hist-delta{font-weight:850}.hist-sub{font-size:.75rem;color:var(--sub);margin-top:3px}.delete{background:transparent;border:none;color:#adbdcc;padding:7px;font-size:.9rem}.delete:hover{color:var(--red)}.empty{color:var(--sub);text-align:center;padding:25px 10px}.settings{display:none}.settings.show{display:block}.toolbar{display:flex;flex-wrap:wrap;gap:7px}.toolbar button{font-size:.83rem;padding:9px 11px}.newpanel{display:none}.newpanel.show{display:block}.notice{font-size:.79rem;color:var(--sub);margin-top:12px;line-height:1.5}.sr-only{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden}.toast{position:fixed;z-index:99;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#f1f5fc;color:#152136;padding:12px 19px;border-radius:12px;box-shadow:0 5px 25px #0008;opacity:0;transition:.24s;max-width:92vw;text-align:center}.toast.on{transform:translateX(-50%) translateY(0);opacity:1}footer{text-align:center;color:#738ba1;font-size:.75rem;line-height:1.5;margin:17px 0 7px}@media(max-width:365px){.container{padding-left:9px;padding-right:9px}.panel{padding:12px}.stat{padding:8px}.stat .val{font-size:.96rem}.stack{font-size:2.65rem}}@media(min-width:680px){canvas{height:280px}}
+
+.link-btn{border:0;background:transparent;color:var(--blue);font-size:.84rem;padding:4px 0;text-decoration:underline;text-underline-offset:3px}.startline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:5px 0 0}.startline b{color:var(--txt)}.required-box{margin-top:15px;background:#0b1a29;border:1px solid #2e4960;border-radius:13px;padding:12px}.required-box h3{font-size:.9rem;margin:0 0 8px}.position-select{display:flex;gap:8px;flex-wrap:wrap}.position-select label{margin:0;flex:1 1 145px}.position-select select{margin-top:7px}.callout{border-left:3px solid var(--gold);padding-left:11px;color:#cfdeeb;font-size:.8rem;line-height:1.5;margin:12px 0}.compactlabel{margin-top:11px}.muted-btn{background:#203749;color:#e6f1fa;border:1px solid #3a566f;border-radius:11px;min-height:48px;padding:9px 13px;font-weight:700}.pill-soft{background:#203145;border:1px solid #3c5b78;border-radius:10px;padding:4px 8px;color:#c3d9e9;font-size:.74rem;white-space:nowrap}
+
+/* Notes des mains */
+.note-input{margin:15px 0 14px}
+.note-input label{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.note-help{font-size:.77rem;font-weight:400;color:var(--sub)}
+.history-item>div{min-width:0}
+.hist-note{white-space:pre-wrap;overflow-wrap:anywhere;color:#d7e9f5;background:#15273b;border-left:3px solid #7db7ff;border-radius:0 7px 7px 0;padding:7px 9px;margin-top:9px;font-size:.83rem;line-height:1.5}
+.hist-actions{margin-top:7px}
+.note-edit-link{font-size:.76rem;border:0;background:none;color:var(--blue);padding:4px 4px 4px 0;text-decoration:underline;text-underline-offset:2px}
+.note-editor{margin-top:8px}
+.note-editor textarea{min-height:95px;font-size:.88rem}
+.note-editor .row{margin-top:7px}
+.note-editor button{font-size:.8rem;padding:8px 11px}
+/* Choix de l'unité du graphique */
+.chart-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 11px}
+.chart-switch{display:inline-flex;gap:3px;padding:4px;border-radius:12px;background:#081523;border:1px solid #35506a}
+.chart-switch button{border:0;color:#c1d2e2;background:transparent;border-radius:9px;padding:9px 17px;font-weight:750;font-size:.89rem;min-width:94px}
+.chart-switch button[aria-pressed="true"]{background:#2dd4a7;color:#091d23;box-shadow:0 2px 8px #0004}
+.chart-switch button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.chart-desc{line-height:1.4}
+
+/* Courbe interactive : curseur, zoom horizontal et échelle BB */
+.chart-subcontrols{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+.scale-switch{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.scale-switch[hidden]{display:none}
+.scale-switch span{font-size:.8rem;color:var(--sub);margin-right:3px}
+.scale-switch button{border:1px solid #39536b;border-radius:9px;background:#102235;color:#b9d2e5;min-height:37px;padding:7px 11px;font-weight:700;font-size:.79rem}
+.scale-switch button[aria-pressed="true"]{background:#244a4b;border-color:#2dd4a7;color:#e1fff7}
+.zoom-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.zoom-tools button{min-width:42px;min-height:41px;border-radius:10px;background:#21394c;border:1px solid #42617a;color:white;font-weight:800}
+.zoom-tools #zoomReset{padding:8px 11px;font-size:.78rem;min-width:auto;font-weight:650}
+.zoom-tools #zoomReadout{font-size:.82rem;min-width:35px;text-align:center;color:var(--gold);font-weight:800}
+#chart{height:255px;cursor:crosshair;touch-action:pan-y;outline-offset:3px}
+.chartbox{padding:7px 5px 3px}
+.chart-nav{display:flex;gap:9px;align-items:center;margin:12px 0 3px}
+.chart-nav label{font-size:.77rem;color:var(--sub);min-width:0}
+.chart-nav input[type=range]{flex:1;min-width:0;border:0;padding:0;background:transparent;accent-color:var(--green);min-height:33px;cursor:pointer}
+.chart-nav input[type=range]:disabled{opacity:.3;cursor:default}
+#visibleRange{font-size:.73rem;color:var(--sub);text-align:right;min-width:66px}
+.selected-hand{border:1px solid #36536a;background:#0c1b2a;padding:12px;border-radius:12px;margin:13px 0 3px}
+.selected-main{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.selected-values{display:flex;align-items:baseline;flex-wrap:wrap;gap:7px;margin:6px 0 1px}
+.selected-values strong{font-size:1.35rem;color:#e6f4fa}
+.selected-values .badge{font-size:.84rem;border-radius:20px;border:1px solid #29564c;padding:4px 8px;color:#55e0bb;background:#102b2a;font-weight:800}
+.selected-actions{display:flex;gap:7px}
+.selected-actions button{min-height:43px;min-width:43px;background:#1e374b;color:white;border:1px solid #395a72;border-radius:10px;font-weight:800}
+.selected-detail{font-size:.79rem;line-height:1.5;color:var(--sub);margin-top:7px}
+#selectedNote{margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:#d6e9f6;font-size:.82rem;line-height:1.5}
+.tip-small{font-size:.77rem;color:var(--sub);line-height:1.5;margin-top:9px}
+@media(min-width:680px){#chart{height:320px}}
+@media(max-width:385px){.chart-switch button{min-width:78px;padding:9px 11px}.chart-nav{flex-wrap:wrap}.chart-nav label{width:100%}.chart-nav input[type=range]{flex-basis:calc(100% - 85px)}}
+#installApp[hidden]{display:none}
+#installApp{font-size:.83rem;padding:10px}
+@media(max-width:365px){#toggleSettings{font-size:.83rem;padding:10px}}
+/* Interface épurée */
+.panel{margin:10px 0;padding:15px}
+header{margin-bottom:12px}
+.input-wrap,.note-input{margin:10px 0}
+.note-input textarea{min-height:68px}
+.required-box{margin-top:10px}
+.chart-nav{margin-top:7px}
+@media(max-width:390px){.stats{margin-top:12px}.action{min-height:60px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header><div class="brand"><div class="chip" aria-hidden="true">♠</div><div><div class="brand-title">STACK<span style="color:var(--green)">.</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<section id="settingsPanel" class="panel settings" aria-label="Réglages">
+ <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
+ <form id="startForm" style="margin-bottom:18px">
+  <label for="editStartStack">Stack initial du tournoi en cours</label>
+  <div class="bar"><input type="number" id="editStartStack" min="1" step="1" inputmode="numeric" required placeholder="Ex. 30000"><button type="submit" class="mini-btn">Enregistrer</button></div>
+
+ </form>
+ <div class="divider"></div>
+ <label for="sessions">Choisir un tournoi</label><select id="sessions"></select>
+ <button class="skip" type="button" id="toggleNew">＋ Nouveau tournoi</button>
+ <form id="newForm" class="newpanel" style="margin-top:13px">
+  <label for="newName">Nom du tournoi</label><input id="newName" maxlength="60" value="Tournoi du jour" required>
+  <div class="columns" style="margin-top:9px"><div><label for="newStack">Stack de départ</label><input id="newStack" type="number" min="1" step="1" inputmode="numeric" value="30000" required></div><div><label for="newSB">Petite blinde (SB)</label><input id="newSB" type="number" min="0" step="1" inputmode="numeric" value="100" required></div></div>
+  <div class="columns" style="margin-top:9px"><div><label for="newBB">Grosse blinde (BB)</label><input id="newBB" type="number" min="1" step="1" inputmode="numeric" value="200" required></div><div><label for="newAnte">Ante</label><input id="newAnte" type="number" min="0" step="1" inputmode="numeric" value="200" required></div></div>
+  <div class="compactlabel"><label for="newAnteMode">Type d'ante</label><select id="newAnteMode"><option value="bba">Big Blind Ante (payée par la BB)</option><option value="each">Ante individuelle (payée par chacun)</option></select></div>
+  <button class="action gain full" style="min-height:49px;margin-top:13px" type="submit">Créer ce tournoi</button>
+ </form>
+ <div class="divider"></div>
+ <div class="toolbar"><button type="button" class="ghost" id="csv">⇩ CSV</button><button type="button" class="ghost" id="backup">⇩ Sauvegarder</button><button type="button" class="ghost" id="importBtn">⇧ Récupérer mes tournois (JSON)</button><button type="button" class="ghost" id="deleteTournament">Supprimer le tournoi</button></div>
+ <input class="sr-only" type="file" id="fileInput" accept=".json,application/json">
+
+ <p id="storageWarning" class="notice" style="color:var(--red);display:none">⚠ Stockage local bloqué sur ce navigateur. Pense à exporter ta sauvegarde avant de quitter.</p>
+</section>
+<section class="panel" aria-labelledby="stackTitle">
+ <div class="row space"><div class="kicker" id="stackTitle">Stack actuel</div><div class="bb-pill" id="bbCount">150 BB</div></div>
+ <div class="stack" aria-live="polite"><span id="stackDisplay">30 000</span> <span class="unit">jetons</span></div>
+ <button type="button" class="link-btn" id="quickTournament" style="margin-top:6px" aria-label="Choisir un autre tournoi"><span id="tournamentName">Tournoi du jour</span> ▾</button>
+ <div class="startline"><div class="micro" style="margin-top:0">Départ : <b id="startDisplay">30 000</b> jetons</div><button class="link-btn" type="button" id="editStart">✎ Modifier le stack initial</button></div>
+ <div class="stats"><div class="stat"><div class="small">Évolution</div><div class="val" id="netDisplay">+0</div></div><div class="stat"><div class="small">Mains suivies</div><div class="val" id="handCount">0</div></div><div class="stat"><div class="small">Blindes</div><div class="val" id="blindsDisplay">100 / 200</div></div></div>
+</section>
+<section class="panel" aria-labelledby="actionTitle">
+ <div class="panel-head"><h2 id="actionTitle">Enregistrer une main</h2><button type="button" class="ghost" style="padding:8px 11px" id="undo">↶ Annuler</button></div>
+ <label for="amount">Variation nette de jetons</label><input class="biginput" id="amount" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 2 500">
+
+ <div class="note-input"><label for="handNote"><span>📝 Notes sur la main</span></label>
+  <textarea id="handNote" maxlength="2000" rows="2" placeholder="Notes : AKo, CO, open 2 BB…"></textarea>
+
+ </div>
+ <div class="action-grid"><button type="button" id="win" class="action gain">＋ Gagnés</button><button type="button" id="lose" class="action loss">− Perdus</button></div>
+ <button type="button" id="skip" class="skip">Main sans variation (0 jeton)</button>
+ <div class="required-box"><h3>⚡ Fold rapide</h3>
+  <div class="position-select"><label for="position">Ma position sur cette main<select id="position"><option value="other">Hors blindes</option><option value="sb">Petite blinde (SB)</option><option value="bb">Grosse blinde (BB)</option></select></label><button type="button" id="fold" class="muted-btn" style="align-self:end;flex:1 1 150px">Fold : <span id="foldCost">−0</span></button></div>
+
+ </div>
+</section>
+<section class="panel" aria-labelledby="blindsTitle">
+ <div class="panel-head"><h2 id="blindsTitle">Niveau de blindes</h2></div>
+ <div class="columns"><div><label for="sbInput">Petite blinde (SB)</label><input id="sbInput" type="number" min="0" step="1" inputmode="numeric" value="100"></div><div><label for="bbInput">Grosse blinde (BB)</label><input id="bbInput" type="number" min="1" step="1" inputmode="numeric" value="200"></div></div>
+ <div class="columns" style="margin-top:12px"><div><label for="anteInput">Ante (jetons)</label><input id="anteInput" type="number" min="0" step="1" inputmode="numeric" value="200"></div><div><label for="anteMode">Type d'ante</label><select id="anteMode"><option value="bba">Big Blind Ante</option><option value="each">Ante individuelle</option></select></div></div>
+ <button type="button" id="updateBlinds" class="mini-btn full" style="margin-top:13px">Mettre à jour le niveau</button>
+
+</section>
+<section class="panel" aria-labelledby="chartTitle">
+ <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><span class="small" id="rangeLabel">Depuis le départ</span></div>
+ <div class="chart-controls"><div class="chart-switch" role="group" aria-label="Unité du graphique"><button type="button" id="graphChips" aria-pressed="true">Jetons</button><button type="button" id="graphBB" aria-pressed="false">BB</button></div></div>
+ <div class="chart-subcontrols"><div class="scale-switch" id="bbScaleGroup" role="group" aria-label="Échelle du graphique en BB" hidden><button type="button" id="scaleLinear" aria-pressed="false">Linéaire</button><button type="button" id="scaleLog" aria-pressed="true">Logarithmique</button></div>
+  <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
+ </div>
+ <div class="chartbox"><canvas id="chart" tabindex="0" role="img" aria-label="Graphique interactif. Toucher une position pour sélectionner une main. Flèches du clavier : main précédente ou suivante."></canvas></div>
+ <div class="chart-nav"><label for="chartPan" class="sr-only">Déplacer la zone visible</label><input type="range" id="chartPan" min="0" max="0" step="1" value="0" aria-label="Faire défiler le graphique horizontalement"><span id="visibleRange">Toutes les mains</span></div>
+ <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main"><div><span class="kicker" id="selectedTitle">Départ</span><div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div></div>
+  <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div></div>
+  <div class="selected-detail" id="selectedDetail">Stack de départ</div><div id="selectedNote"></div></div>
+
+
+</section>
+<section class="panel" aria-labelledby="historyTitle"><div class="panel-head"><h2 id="historyTitle">Historique des mains</h2><span class="small" id="countLabel">0 main</span></div><div id="history" class="items"></div></section>
+
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+(()=>{'use strict';
+const KEY='poker-stack-suivi-v2'; const GRAPH_KEY='poker-stack-graph-mode-v3'; const $=id=>document.getElementById(id);const nf=new Intl.NumberFormat('fr-FR');
+const fmt=n=>nf.format(n);const now=()=>new Date().toISOString();const uid=()=>('p'+Date.now()+Math.random().toString(36).slice(2));
+const cleanInt=x=>Number.isSafeInteger(Number(x))?Number(x):NaN;let localOK=true;
+function sample(){const s={id:uid(),name:'Tournoi du jour',startStack:30000,sb:100,bb:200,initialBB:200,ante:200,anteMode:'bba',createdAt:now(),hands:[]};return {sessions:[s],activeId:s.id}}
+function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.sessions.length>200)throw Error('Fichier invalide');for(const s of d.sessions){if(typeof s.id!=='string'||typeof s.name!=='string'||!Number.isSafeInteger(s.startStack)||s.startStack<=0||!Number.isSafeInteger(s.bb)||s.bb<=0||!Array.isArray(s.hands)||s.hands.length>200000)throw Error('Tournoi invalide');if(!Number.isSafeInteger(s.initialBB)||s.initialBB<=0)s.initialBB=(s.hands.length&&Number.isSafeInteger(s.hands[0].bb)&&s.hands[0].bb>0)?s.hands[0].bb:s.bb;if(s.ante===undefined)s.ante=0;if(s.anteMode===undefined)s.anteMode='bba';if(!Number.isSafeInteger(s.ante)||s.ante<0||!['bba','each'].includes(s.anteMode))throw Error('Ante invalide');if(!Number.isSafeInteger(s.sb)||s.sb<0||s.sb>s.bb)throw Error('Petite blinde invalide');let stack=s.startStack;for(const h of s.hands){if(!Number.isSafeInteger(h.delta)||typeof h.id!=='string')throw Error('Historique invalide');if(h.note===undefined)h.note='';if(typeof h.note!=='string'||h.note.length>2000)throw Error('Note invalide');stack+=h.delta;if(!Number.isSafeInteger(stack)||stack<0)throw Error('Stack négatif dans la sauvegarde')}}if(!d.sessions.some(s=>s.id===d.activeId))d.activeId=d.sessions[0].id;return d}
+let graphMode='chips';try{graphMode=localStorage.getItem(GRAPH_KEY)==='bb'?'bb':'chips'}catch(e){}
+let data;try{const saved=localStorage.getItem(KEY);data=saved?validate(JSON.parse(saved)):sample()}catch(e){data=sample();localOK=false}if(!localOK)$('storageWarning').style.display='block';
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localOK=true;$('storageWarning').style.display='none'}catch(e){localOK=false;$('storageWarning').style.display='block'}}
+function current(){return data.sessions.find(s=>s.id===data.activeId)||data.sessions[0]}
+function total(s){return s.hands.reduce((a,h)=>a+h.delta,s.startStack)}
+function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('on'),2800)}
+function pushHand(delta,kind='manual',position=''){ const s=current(), t=total(s);if(!Number.isSafeInteger(delta)||!Number.isSafeInteger(t+delta)){toast('Montant trop élevé');return}if(t+delta<0){toast('Impossible de perdre plus de jetons que ton stack');return}s.hands.push({id:uid(),delta,bb:s.bb,sb:s.sb,ante:s.ante,anteMode:s.anteMode,kind,position,note:$('handNote').value.trim(),createdAt:now()});$('amount').value='';$('handNote').value='';save();render();toast(delta===0?'Main enregistrée':(delta>0?'Gain enregistré':'Perte enregistrée'))}
+function handleAmount(sign){const amt=cleanInt($('amount').value);if(!Number.isSafeInteger(amt)||amt<=0){$('amount').focus();toast('Entre un montant positif en jetons');return}pushHand(sign*amt)}
+$('win').addEventListener('click',()=>handleAmount(1));$('lose').addEventListener('click',()=>handleAmount(-1));$('skip').addEventListener('click',()=>pushHand(0,'skip'));
+$('amount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleAmount(1)}});
+$('undo').addEventListener('click',()=>{const s=current();if(!s.hands.length)return;s.hands.pop();save();render();toast('Dernière main annulée')});
+function blindCost(s,pos){return (pos==='sb'?s.sb:pos==='bb'?s.bb:0)+(s.anteMode==='each'||(s.anteMode==='bba'&&pos==='bb')?s.ante:0)}
+function updateFoldLabel(){const s=current();const cost=blindCost(s,$('position').value);$('foldCost').textContent='−'+fmt(cost)}
+$('position').addEventListener('change',updateFoldLabel);
+$('fold').addEventListener('click',()=>{const p=$('position').value,amt=blindCost(current(),p);pushHand(-amt,'fold',p)});
+$('updateBlinds').addEventListener('click',()=>{const sb=cleanInt($('sbInput').value),bb=cleanInt($('bbInput').value),ante=cleanInt($('anteInput').value),anteMode=$('anteMode').value;if(!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Vérifie les blindes et antes');return}const s=current();s.sb=sb;s.bb=bb;s.ante=ante;s.anteMode=anteMode;save();render();toast('Blindes et antes mises à jour')});
+$('startForm').addEventListener('submit',e=>{e.preventDefault();const s=current(),v=cleanInt($('editStartStack').value);if(!Number.isSafeInteger(v)||v<=0){toast('Stack initial invalide');return}let running=v;for(const h of s.hands){running+=h.delta;if(!Number.isSafeInteger(running)||running<0){toast('Cette valeur rendrait un stack passé négatif');return}}s.startStack=v;save();render();toast('Stack de départ modifié')});
+$('editStart').addEventListener('click',()=>{$('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');$('startForm').scrollIntoView({behavior:'smooth',block:'center'});$('editStartStack').focus({preventScroll:true})});
+$('toggleSettings').addEventListener('click',()=>{const show=$('settingsPanel').classList.toggle('show');$('toggleSettings').setAttribute('aria-expanded',show)});
+$('quickTournament').addEventListener('click',()=>{$('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');$('sessions').scrollIntoView({behavior:'smooth',block:'center'});$('sessions').focus({preventScroll:true})});
+$('toggleNew').addEventListener('click',()=>{$('newForm').classList.toggle('show')});
+$('newForm').addEventListener('submit',e=>{e.preventDefault();const stack=cleanInt($('newStack').value),sb=cleanInt($('newSB').value),bb=cleanInt($('newBB').value),ante=cleanInt($('newAnte').value),anteMode=$('newAnteMode').value,name=$('newName').value.trim();if(!name||!Number.isSafeInteger(stack)||stack<=0||!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Paramètres invalides');return}const s={id:uid(),name,startStack:stack,sb,bb,initialBB:bb,ante,anteMode,createdAt:now(),hands:[]};data.sessions.push(s);data.activeId=s.id;save();$('newForm').classList.remove('show');$('settingsPanel').classList.remove('show');$('toggleSettings').setAttribute('aria-expanded','false');render();toast('Nouveau tournoi créé')});
+$('sessions').addEventListener('change',e=>{data.activeId=e.target.value;save();render()});
+$('deleteTournament').addEventListener('click',()=>{if(!confirm('Supprimer ce tournoi et son historique ? Exporte une sauvegarde avant si nécessaire.'))return;const s=current();data.sessions=data.sessions.filter(x=>x.id!==s.id);if(!data.sessions.length){const d=sample();data.sessions=d.sessions}data.activeId=data.sessions[0].id;save();render();toast('Tournoi supprimé')});
+function download(content,type,filename){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}
+function slug(str){return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'tournoi'}
+function csvCell(value){const str=String(value??'');return /[;"\r\n]/.test(str)?'"'+str.replace(/"/g,'""')+'"':str}
+$('csv').addEventListener('click',()=>{
+ const session=current();let stack=session.startStack;
+ const rows=[['Main','Date ISO','Action','Position','Variation (jetons)','Stack après main (jetons)','SB','BB','Ante','Mode ante','Stack (BB)','Notes'].map(csvCell).join(';')];
+ for(const [i,h] of session.hands.entries()){
+  stack+=h.delta;
+  rows.push([i+1,h.createdAt,h.kind||'manual',h.position||'',h.delta,stack,h.sb,h.bb,h.ante||0,h.anteMode||'bba',(stack/h.bb).toFixed(2).replace('.',','),h.note||''].map(csvCell).join(';'));
+ }
+ download('\uFEFF'+rows.join('\r\n'),'text/csv;charset=utf-8',slug(session.name)+'.csv');toast('CSV avec notes exporté');
+});
+$('backup').addEventListener('click',()=>{download(JSON.stringify(data,null,2),'application/json', 'poker-stack-sauvegarde.json');toast('Sauvegarde exportée')});
+$('importBtn').addEventListener('click',()=>$('fileInput').click());
+$('fileInput').addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const parsed=validate(JSON.parse(await file.text()));
+  const existingIds=new Set(data.sessions.map(s=>s.id));
+  const missing=parsed.sessions.filter(s=>!existingIds.has(s.id));
+  const overlap=parsed.sessions.length-missing.length;
+  const message=overlap
+    ? `Importer ${missing.length} tournoi(x) supplémentaire(s) ? ${overlap} tournoi(x) déjà présent(s) seront conservés sans modification.`
+    : `Ajouter ${missing.length} tournoi(x) depuis cette sauvegarde ?`;
+  if(!confirm(message))return;
+  data.sessions.push(...missing);
+  if(missing.length)data.activeId=missing[missing.length-1].id;
+  save();render();toast(missing.length+' tournoi(x) récupéré(s)');
+ }catch(err){toast('Import impossible : '+err.message)}finally{e.target.value=''}
+});
+function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;updateFoldLabel();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
+const sel=$('sessions');if(sel.options.length!==data.sessions.length||[...sel.options].some((o,i)=>o.value!==data.sessions[i].id)){sel.replaceChildren();for(const session of data.sessions){const opt=document.createElement('option');opt.value=session.id;opt.textContent=session.name;sel.appendChild(opt)}}sel.value=s.id;
+const hist=$('history');hist.replaceChildren();
+if(!s.hands.length){
+ const p=document.createElement('p');p.className='empty';p.textContent='Aucune main enregistrée';hist.appendChild(p);
+}else{
+ let cumulative=t;
+ for(let idx=s.hands.length-1;idx>=Math.max(0,s.hands.length-30);idx--){
+  const h=s.hands[idx],item=document.createElement('div');item.className='history-item';
+  const index=document.createElement('span');index.className='index';index.textContent='#'+(idx+1);
+  const detail=document.createElement('div');
+  const val=document.createElement('div');val.className='hist-delta '+(h.delta>0?'pos':h.delta<0?'neg':'info');val.textContent=(h.delta>0?'+':'')+fmt(h.delta)+' jetons'+(h.kind==='fold'?' · fold':'');
+  const sub=document.createElement('div');sub.className='hist-sub';sub.textContent=new Date(h.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' · '+fmt(h.bb)+' BB'+(h.kind==='fold'?' · '+({other:'hors blindes',sb:'SB',bb:'BB'}[h.position]||''): '');
+  detail.append(val,sub);
+  if(h.note){const note=document.createElement('div');note.className='hist-note';note.textContent='📝 '+h.note;detail.appendChild(note)}
+  const controls=document.createElement('div');controls.className='hist-actions';
+  const edit=document.createElement('button');edit.className='note-edit-link';edit.type='button';edit.textContent=h.note?'✎ Modifier la note':'＋ Ajouter une note';edit.setAttribute('aria-label',`Modifier la note de la main ${idx+1}`);
+  edit.addEventListener('click',()=>{
+   if(controls.querySelector('textarea'))return;
+   edit.hidden=true;
+   const editor=document.createElement('div');editor.className='note-editor';
+   const field=document.createElement('textarea');field.value=h.note||'';field.maxLength=2000;field.rows=3;field.setAttribute('aria-label',`Note de la main ${idx+1}`);
+   const buttons=document.createElement('div');buttons.className='row';
+   const confirm=document.createElement('button');confirm.className='mini-btn';confirm.type='button';confirm.textContent='Enregistrer la note';
+   const cancel=document.createElement('button');cancel.className='ghost';cancel.type='button';cancel.textContent='Annuler';
+   confirm.addEventListener('click',()=>{h.note=field.value.trim();save();render();toast('Note enregistrée')});
+   cancel.addEventListener('click',()=>{editor.remove();edit.hidden=false});
+   buttons.append(confirm,cancel);editor.append(field,buttons);controls.appendChild(editor);field.focus();
+  });
+  controls.appendChild(edit);detail.appendChild(controls);
+  const stack=document.createElement('span');stack.className='small';stack.textContent=fmt(cumulative)+' jetons';
+  const del=document.createElement('button');del.className='delete';del.type='button';del.textContent='✕';del.title='Supprimer cette main';del.setAttribute('aria-label',`Supprimer la main ${idx+1}`);
+  del.addEventListener('click',()=>{if(!confirm('Supprimer cette main de l’historique ?'))return;s.hands.splice(idx,1);save();render();toast('Main supprimée')});
+  item.append(index,detail,stack,del);hist.append(item);cumulative-=h.delta;
+ }
+ if(s.hands.length>30){const p=document.createElement('p');p.className='small';p.style.textAlign='center';p.textContent='30 dernières mains · CSV : historique complet';hist.appendChild(p)}
+}
+drawChart()}
+// État de visualisation (la sauvegarde du tournoi et des notes reste 100 % compatible V4).
+const SCALE_KEY='poker-stack-bb-scale-v5';
+let bbScale='log';try{if(localStorage.getItem(SCALE_KEY)==='linear')bbScale='linear'}catch(e){}
+let viewCount=null; // null : afficher toutes les mains
+let viewStart=0;    // index de la première main visible, départ = 0
+let selectedIndex=null;
+let chartSessionId=null;
+let chartState=null;
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const bbText=n=>n.toLocaleString('fr-FR',{maximumFractionDigits:n<10?2:1})+' BB';
+function setGraphMode(mode){
+ graphMode=mode==='bb'?'bb':'chips';
+ try{localStorage.setItem(GRAPH_KEY,graphMode)}catch(e){}
+ $('graphChips').setAttribute('aria-pressed',String(graphMode==='chips'));
+ $('graphBB').setAttribute('aria-pressed',String(graphMode==='bb'));
+ $('bbScaleGroup').hidden=graphMode!=='bb';
+ drawChart();
+}
+function setBBScale(scale){
+ bbScale=scale==='linear'?'linear':'log';
+ try{localStorage.setItem(SCALE_KEY,bbScale)}catch(e){}
+ $('scaleLinear').setAttribute('aria-pressed',String(bbScale==='linear'));
+ $('scaleLog').setAttribute('aria-pressed',String(bbScale==='log'));
+ setGraphMode(graphMode);
+}
+$('graphChips').addEventListener('click',()=>setGraphMode('chips'));
+$('graphBB').addEventListener('click',()=>setGraphMode('bb'));
+$('scaleLinear').addEventListener('click',()=>setBBScale('linear'));
+$('scaleLog').addEventListener('click',()=>setBBScale('log'));
+function buildPoints(s){
+ let running=s.startStack;
+ const blind=s.initialBB||s.bb;
+ const points=[{chips:running,bb:running/blind,blind,hand:null}];
+ for(const hand of s.hands){
+  running+=hand.delta;
+  const b=hand.bb>0?hand.bb:s.bb;
+  points.push({chips:running,bb:running/b,blind:b,hand});
+ }
+ return points;
+}
+function ensureState(s, count){
+ if(chartSessionId!==s.id){chartSessionId=s.id;viewCount=null;viewStart=0;selectedIndex=count-1}
+ if(selectedIndex===null||selectedIndex<0||selectedIndex>=count)selectedIndex=count-1;
+ if(viewCount!==null)viewCount=clamp(viewCount,Math.min(3,count),count);
+ const visible=viewCount===null?count:viewCount;
+ viewStart=clamp(Math.round(viewStart),0,count-visible);
+ return {visible,start:viewStart,end:viewStart+visible-1};
+}
+function updateNav(count, visible, start){
+ const maxStart=Math.max(0,count-visible);
+ $('chartPan').max=String(maxStart);
+ $('chartPan').value=String(start);
+ $('chartPan').disabled=maxStart===0;
+ $('zoomIn').disabled=visible<=Math.min(3,count);
+ $('zoomOut').disabled=visible>=count;
+ $('zoomReset').disabled=visible>=count;
+ $('zoomReadout').textContent='×'+(count/visible).toLocaleString('fr-FR',{maximumFractionDigits:1});
+ $('visibleRange').textContent=start+'–'+(start+visible-1)+' / '+(count-1);
+ $('selectPrev').disabled=selectedIndex<=0;
+ $('selectNext').disabled=selectedIndex>=count-1;
+ $('rangeLabel').textContent=count>1?count-1+' mains enregistrées':'Depuis le départ';
+}
+function updateSelected(points){
+ const idx=selectedIndex, p=points[idx];
+ const hand=p.hand;
+ $('selectedTitle').textContent=idx===0?'Départ du tournoi':'Main n° '+idx;
+ $('selectedStack').textContent=fmt(p.chips)+' jetons';
+ $('selectedBB').textContent=bbText(p.bb);
+ $('selectedDetail').textContent=idx===0
+  ? 'Stack initial · BB '+fmt(p.blind)
+  : (hand.delta>0?'+':'')+fmt(hand.delta)+' jetons · Blindes '+fmt(hand.sb??0)+' / '+fmt(p.blind)+' · Ante '+fmt(hand.ante??0)+' · '+new Date(hand.createdAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+ $('selectedNote').textContent=hand?.note?'📝 '+hand.note:'';
+}
+function selectPoint(idx,scrollIntoView=false){
+ const count=current().hands.length+1;
+ selectedIndex=clamp(Math.round(idx),0,count-1);
+ if(scrollIntoView){
+  const visible=viewCount===null?count:viewCount;
+  if(selectedIndex<viewStart)viewStart=selectedIndex;
+  else if(selectedIndex>=viewStart+visible)viewStart=selectedIndex-visible+1;
+ }
+ drawChart();
+}
+function zoomChart(factor){
+ const count=current().hands.length+1;
+ const oldVisible=viewCount===null?count:viewCount;
+ const newVisible=clamp(factor>1?Math.ceil(oldVisible/factor):oldVisible*2,Math.min(3,count),count);
+ if(newVisible===oldVisible)return;
+ // Conserve la main sélectionnée dans la partie visible lors du zoom.
+ const pivot=selectedIndex===null?count-1:selectedIndex;
+ const prevRatio=oldVisible>1?(pivot-viewStart)/(oldVisible-1):.5;
+ viewCount=newVisible===count?null:newVisible;
+ viewStart=clamp(Math.round(pivot-clamp(prevRatio,0,1)*(newVisible-1)),0,count-newVisible);
+ drawChart();
+}
+$('zoomIn').addEventListener('click',()=>zoomChart(2));
+$('zoomOut').addEventListener('click',()=>zoomChart(.5));
+$('zoomReset').addEventListener('click',()=>{viewCount=null;viewStart=0;drawChart()});
+$('chartPan').addEventListener('input',e=>{viewStart=Number(e.target.value);drawChart()});
+$('selectPrev').addEventListener('click',()=>selectPoint((selectedIndex??0)-1,true));
+$('selectNext').addEventListener('click',()=>selectPoint((selectedIndex??0)+1,true));
+function drawChart(){
+ const canvas=$('chart'),rect=canvas.getBoundingClientRect();if(rect.width<=0)return;
+ const w=rect.width,h=rect.height,ratio=Math.min(window.devicePixelRatio||1,3);
+ canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);
+ const ctx=canvas.getContext('2d');ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);
+ const s=current(),asBB=graphMode==='bb';
+ const points=buildPoints(s),count=points.length;
+ const {visible,start,end}=ensureState(s,count);
+ const logarithmic=asBB&&bbScale==='log';
+ const v=p=>asBB?p.bb:p.chips;
+ const f=value=>logarithmic?Math.log1p(Math.max(0,value)):value;
+ const inv=t=>logarithmic?Math.expm1(t):t;
+ let min=Infinity,max=-Infinity;
+ for(let i=start;i<=end;i++){const z=f(v(points[i]));if(z<min)min=z;if(z>max)max=z}
+ let span=max-min;
+ if(span<1e-8){span=logarithmic?.32:Math.max(1,max*.15);min=Math.max(0,min-span*.5);max=max+span*.5}
+ else {min=Math.max(0,min-span*.14);max=max+span*.14}
+ span=Math.max(max-min,1e-8);
+ const left=asBB?55:54,right=12,top=16,bottom=30;
+ const gw=Math.max(w-left-right,1),gh=Math.max(h-top-bottom,1);
+ const x=i=>left+(i-start)/Math.max(visible-1,1)*gw;
+ const y=value=>top+(max-f(value))/span*gh;
+ const tickLabel=value=>asBB?value.toLocaleString('fr-FR',{maximumFractionDigits:value<10?1:0})
+    :Math.abs(value)>=1000?(value/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+'k':Math.round(value).toLocaleString('fr-FR');
+ ctx.font='11px system-ui,sans-serif';ctx.lineWidth=1;ctx.textBaseline='middle';ctx.textAlign='right';
+ for(let j=0;j<5;j++){
+  const scaled=min+span*j/4,yy=top+gh-(j/4)*gh;
+  ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);ctx.strokeStyle='#293d50';ctx.stroke();
+  ctx.fillStyle='#9fb6c8';ctx.fillText(tickLabel(Math.max(0,inv(scaled))),left-8,yy);
+ }
+ ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#9fb6c8';
+ ctx.fillText('Main '+start,left+20,h-24);
+ if(end>start)ctx.fillText('Main '+end,w-right-23,h-24);
+ // On dessine uniquement les points compris dans la fenêtre de zoom.
+ const baseline=top+gh;
+ if(visible>1){
+  const gradient=ctx.createLinearGradient(0,top,0,baseline);
+  gradient.addColorStop(0,'rgba(45,212,167,.28)');gradient.addColorStop(1,'rgba(45,212,167,.01)');
+  ctx.beginPath();ctx.moveTo(x(start),baseline);
+  for(let i=start;i<=end;i++)ctx.lineTo(x(i),y(v(points[i])));
+  ctx.lineTo(x(end),baseline);ctx.closePath();ctx.fillStyle=gradient;ctx.fill();
+  ctx.beginPath();
+  for(let i=start;i<=end;i++){const xx=x(i),yy=y(v(points[i]));if(i===start)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy)}
+  ctx.strokeStyle='#2dd4a7';ctx.lineWidth=2.4;ctx.lineJoin='round';ctx.stroke();
+ }
+ // Point le plus récent de la fenêtre.
+ ctx.fillStyle='#2dd4a7';ctx.beginPath();ctx.arc(x(end),y(v(points[end])),3.5,0,Math.PI*2);ctx.fill();
+ // Curseur persistant de sélection, visible au doigt et à la souris.
+ if(selectedIndex>=start&&selectedIndex<=end){
+  const px=x(selectedIndex),py=y(v(points[selectedIndex]));
+  ctx.beginPath();ctx.setLineDash([4,4]);ctx.moveTo(px,top);ctx.lineTo(px,baseline);ctx.moveTo(left,py);ctx.lineTo(w-right,py);
+  ctx.strokeStyle='#f7d989a8';ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle='#f9d484';ctx.fill();
+  ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fillStyle='#152434';ctx.fill();
+  // Étiquette intégrée, sans masquer le point sélectionné.
+  const label='M'+selectedIndex+' · '+(asBB?bbText(points[selectedIndex].bb):fmt(points[selectedIndex].chips)+' jetons');
+  ctx.font='bold 11px system-ui,sans-serif';const labelW=Math.min(w-18,ctx.measureText(label).width+20);
+  const bx=clamp(px-labelW/2,5,w-labelW-5);
+  const by=py>top+42?clamp(py-32,top,baseline-25):clamp(py+12,top,baseline-25);
+  ctx.fillStyle='#1e3b4b';ctx.fillRect(bx,by,labelW,24);
+  ctx.strokeStyle='#6a8491';ctx.strokeRect(bx+.5,by+.5,labelW-1,23);
+  ctx.fillStyle='#f9e4a4';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,bx+labelW/2,by+12,labelW-8);
+ }
+ chartState={start,end,count,left,right,gw,w,points};
+ updateNav(count,visible,start);
+ updateSelected(points);
+ canvas.setAttribute('aria-label',`Graphique interactif en ${asBB?'BB':'jetons'}. Main sélectionnée ${selectedIndex} sur ${count-1}. Utilise les flèches gauche et droite pour parcourir les mains.`);
+}
+function chooseFromEvent(event){
+ const state=chartState;if(!state)return;
+ const rect=$('chart').getBoundingClientRect();
+ const px=event.clientX-rect.left;
+ const idx=state.start+Math.round((px-state.left)/Math.max(state.gw,1)*(state.end-state.start));
+ selectPoint(idx,false);
+}
+const chartCanvas=$('chart');
+chartCanvas.addEventListener('pointerdown',e=>{if(e.isPrimary!==false)chooseFromEvent(e)});
+chartCanvas.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.buttons>0)chooseFromEvent(e)});
+chartCanvas.addEventListener('keydown',e=>{
+ const k=e.key;
+ if(!['ArrowLeft','ArrowRight','Home','End'].includes(k))return;
+ e.preventDefault();const max=current().hands.length;
+ const idx=k==='Home'?0:k==='End'?max:(selectedIndex??max)+(k==='ArrowLeft'?-1:1);
+ selectPoint(idx,true);
+});
+window.addEventListener('resize',()=>requestAnimationFrame(drawChart));
+// Lors d'une nouvelle main, continuer à suivre la courbe à droite si l'on était en fin de zoom.
+// Garder la fenêtre de zoom sur les mains les plus récentes lors des nouveaux enregistrements.
+let prevSession=null,prevN=null;
+const originalRender=render;
+render=function(){
+ const s=current(),n=s.hands.length;
+ if(chartSessionId===s.id&&prevSession===s.id&&prevN!==null&&n>prevN){
+  if(selectedIndex===prevN)selectedIndex=n;
+  if(viewCount!==null&&viewStart+viewCount>=prevN+1){viewStart=Math.max(0,n+1-viewCount)}
+ }
+ prevSession=s.id;prevN=n;
+ originalRender();
+};
+save();render();setBBScale(bbScale);setGraphMode(graphMode);
+})();
+</script>
+
+<script>
+/* Installation PWA ; les tournois ne sont jamais envoyés vers un serveur. */
+(function(){
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js', {scope: './'}).catch(function(){ /* Mode web toujours utilisable */ });
+    });
+  }
+  var deferredPrompt = null;
+  var installButton = document.getElementById('installApp');
+  if (!installButton) return;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferredPrompt = e; installButton.hidden = false;
+  });
+  installButton.addEventListener('click', async function(){
+    if (!deferredPrompt) return;
+    var prompt = deferredPrompt;
+    deferredPrompt = null;
+    installButton.hidden = true;
+    try { await prompt.prompt(); await prompt.userChoice; } catch(err) { /* Utiliser le menu du navigateur */ }
+  });
+  window.addEventListener('appinstalled', function(){ deferredPrompt=null;installButton.hidden=true; });
+})();
+</script>
+</body>
+</html>
