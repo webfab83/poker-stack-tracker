@@ -159,6 +159,29 @@ header{margin-bottom:12px}
 .bulk-fold-footer #bulkPreview{flex:1 1 140px;line-height:1.4}
 .bulk-fold-footer #bulkFold{min-height:44px;flex:1 1 148px}
 .bulk-hint{font-size:.72rem;margin-top:8px;line-height:1.45}
+/* Repères lisibles, sans ajouter de boutons à l'interface. */
+.chart-key{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:9px 4px 4px;color:#a9bfd1;font-size:.72rem;line-height:1.35}
+.chart-key-items,.chart-key-item{display:inline-flex;align-items:center;gap:5px}
+.chart-key-stroke,.key-stroke{width:15px;height:0;display:inline-block;vertical-align:middle;border-top:2px dashed #f3cc76}
+.key-ten{border-color:#ff9291}.key-twenty{border-color:#f3cc76;margin-left:6px}
+.key-vertical{height:15px;width:0;display:inline-block;border-left:2px dashed #77b3e8;margin-right:2px}
+#thresholdKey[hidden]{display:none!important}
+
+
+/* V13 — Clôture et bilan PDF, sans serveur. */
+#finishPanel[hidden],#finishQuick[hidden],#finishSummary[hidden]{display:none!important}
+.finish-banner{border:1px solid #3d756b;background:#102f2e;border-radius:15px;padding:13px;margin-top:13px}
+.finish-banner .row{gap:8px}
+.finish-btn{border:1px solid #46837c;background:#21493f;color:#ddfff7;border-radius:11px;padding:9px 12px;min-height:43px;font-size:.88rem;font-weight:750}
+.finish-btn:focus-visible{outline:3px solid white;outline-offset:2px}
+.finish-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.finish-fields .full-row{grid-column:1/-1}
+.finish-fields input,.finish-fields select{min-width:0}
+.finish-actions{display:flex;gap:9px;flex-wrap:wrap}
+.finish-actions>*{flex:1 1 135px}
+#finishSummary{color:#a7e9d6;font-size:.87rem;line-height:1.45}
+#finishPanel{scroll-margin-top:12px}
+@media(max-width:380px){.finish-fields{grid-template-columns:1fr}.finish-fields .full-row{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -207,8 +230,24 @@ header{margin-bottom:12px}
  <div class="row space"><div class="kicker" id="stackTitle">Stack actuel</div><div class="bb-pill" id="bbCount">150 BB</div></div>
  <div class="stack" aria-live="polite"><span id="stackDisplay">30 000</span> <span class="unit">jetons</span></div>
  <button type="button" class="link-btn" id="quickTournament" style="margin-top:6px" aria-label="Choisir un autre tournoi"><span id="tournamentName">Tournoi du jour</span> ▾</button>
+ <div class="row" style="margin-top:8px;gap:9px"><button type="button" class="finish-btn" id="finishQuick">🏁 Clôturer / bilan PDF</button><span class="small" id="finishedTag"></span></div>
  <div class="startline"><div class="micro" style="margin-top:0">Départ : <b id="startDisplay">30 000</b> jetons</div><button class="link-btn" type="button" id="editStart">✎ Modifier le stack initial</button></div>
  <div class="stats"><div class="stat"><div class="small">Évolution</div><div class="val" id="netDisplay">+0</div></div><div class="stat"><div class="small">Mains suivies</div><div class="val" id="handCount">0</div></div><div class="stat"><div class="small" title="Mains avec une variation positive ou négative, hors Fold rapide et mains à 0. Estimation basée sur les mains enregistrées.">Mains jouées ≈</div><div class="val" id="playedPercent">—</div><div class="small" id="playedDetail">0 / 0</div></div><div class="stat"><div class="small">Blindes</div><div class="val" id="blindsDisplay">100 / 200</div></div></div>
+</section>
+<section class="panel" id="finishPanel" hidden aria-label="Bilan du tournoi">
+ <div class="panel-head"><h2>🏁 Clôture et bilan du tournoi</h2><span class="small" id="finishAutoHint">Terminer le tournoi</span></div>
+ <p id="finishIntro" class="small">Clôture facultative : tes mains restent enregistrées. Tu peux rouvrir le tournoi ensuite.</p>
+ <div id="finishSummary" hidden class="finish-banner"></div>
+ <form id="finishForm">
+  <div class="finish-fields">
+   <div><label for="finishStatus">Résultat</label><select id="finishStatus"><option value="elimine">Éliminé</option><option value="vainqueur">Vainqueur</option><option value="termine">Terminé / autre</option></select></div>
+   <div><label for="finishRank">Place finale (facultative)</label><input id="finishRank" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 23"></div>
+   <div><label for="finishPlayers">Participants (facultatif)</label><input id="finishPlayers" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 320"></div>
+   <div class="full-row"><label for="finishNote">Bilan personnel (facultatif)</label><textarea id="finishNote" rows="2" maxlength="600" placeholder="Notes générales sur ce tournoi…"></textarea></div>
+  </div>
+  <div class="finish-actions"><button type="submit" class="action gain" style="min-height:49px">✓ Clôturer le tournoi</button><button type="button" class="ghost" id="finishCancel">Plus tard</button></div>
+ </form>
+ <div class="finish-actions" style="margin-top:10px"><button type="button" id="reportDownload" class="finish-btn">⇩ Télécharger le bilan PDF (2 pages)</button><button type="button" id="finishReopen" class="ghost">↶ Rouvrir / corriger</button></div>
 </section>
 <section class="panel" aria-labelledby="actionTitle">
  <div class="panel-head"><h2 id="actionTitle">Enregistrer une main</h2><button type="button" class="ghost" style="padding:8px 11px" id="undo">↶ Annuler</button></div>
@@ -260,6 +299,7 @@ header{margin-bottom:12px}
   <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
  </div>
  <div class="chartbox"><canvas id="chart" tabindex="0" role="img" aria-label="Graphique interactif. Toucher une position pour sélectionner une main. Flèches du clavier : main précédente ou suivante."></canvas></div>
+ <div class="chart-key" id="chartKey" aria-label="Repères du graphique"><span id="thresholdKey" class="chart-key-items"><span class="key-stroke key-ten"></span>10 BB <span class="key-stroke key-twenty"></span>20 BB</span><span class="chart-key-item"><span class="key-vertical"></span>Changement de BB</span></div>
  <div class="chart-nav"><label for="chartPan" class="sr-only">Déplacer la zone visible</label><input type="range" id="chartPan" min="0" max="0" step="1" value="0" aria-label="Faire défiler le graphique horizontalement"><span id="visibleRange">Toutes les mains</span></div>
  <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main"><div><span class="kicker" id="selectedTitle">Départ</span><div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div></div>
   <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div></div>
@@ -317,7 +357,14 @@ const KEY='poker-stack-suivi-v2'; const GRAPH_KEY='poker-stack-graph-mode-v3'; c
 const fmt=n=>nf.format(n);const now=()=>new Date().toISOString();const uid=()=>('p'+Date.now()+Math.random().toString(36).slice(2));
 const cleanInt=x=>Number.isSafeInteger(Number(x))?Number(x):NaN;let localOK=true;
 function sample(){const s={id:uid(),name:'Tournoi du jour',startStack:30000,sb:100,bb:200,initialBB:200,ante:200,anteMode:'bba',blindMode:'manual',blindLevels:[],levelIndex:-1,tableSize:10,createdAt:now(),hands:[]};return {sessions:[s],activeId:s.id}}
-function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.sessions.length>200)throw Error('Fichier invalide');for(const s of d.sessions){if(typeof s.id!=='string'||typeof s.name!=='string'||!Number.isSafeInteger(s.startStack)||s.startStack<=0||!Number.isSafeInteger(s.bb)||s.bb<=0||!Array.isArray(s.hands)||s.hands.length>200000)throw Error('Tournoi invalide');if(s.blindMode!=='preset')s.blindMode='manual';if(!Number.isSafeInteger(s.tableSize)||s.tableSize<2||s.tableSize>10)s.tableSize=10;
+function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.sessions.length>200)throw Error('Fichier invalide');for(const s of d.sessions){if(typeof s.id!=='string'||typeof s.name!=='string'||!Number.isSafeInteger(s.startStack)||s.startStack<=0||!Number.isSafeInteger(s.bb)||s.bb<=0||!Array.isArray(s.hands)||s.hands.length>200000)throw Error('Tournoi invalide');if(s.result&&typeof s.result==='object'){
+  if(!['elimine','vainqueur','termine'].includes(s.result.status))s.result=null;
+  else {s.result.rank=Number.isSafeInteger(s.result.rank)&&s.result.rank>0?s.result.rank:null;
+   s.result.players=Number.isSafeInteger(s.result.players)&&s.result.players>0?s.result.players:null;
+   s.result.note=typeof s.result.note==='string'?s.result.note.slice(0,600):'';
+   if(typeof s.result.endedAt!=='string')s.result.endedAt=now();}
+ }else s.result=null;
+ if(s.blindMode!=='preset')s.blindMode='manual';if(!Number.isSafeInteger(s.tableSize)||s.tableSize<2||s.tableSize>10)s.tableSize=10;
 if(!Array.isArray(s.blindLevels))s.blindLevels=[];
 s.blindLevels=s.blindLevels.filter(l=>l&&Number.isSafeInteger(l.sb)&&l.sb>=0&&Number.isSafeInteger(l.bb)&&l.bb>0&&l.sb<=l.bb&&Number.isSafeInteger(l.ante)&&l.ante>=0).slice(0,120).map(l=>({sb:l.sb,bb:l.bb,ante:l.ante}));
 if(!Number.isSafeInteger(s.levelIndex)||s.levelIndex<0||s.levelIndex>=s.blindLevels.length)s.levelIndex=-1;
@@ -328,7 +375,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localOK=true;
 function current(){return data.sessions.find(s=>s.id===data.activeId)||data.sessions[0]}
 function total(s){return s.hands.reduce((a,h)=>a+h.delta,s.startStack)}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('on'),2800)}
-function pushHand(delta,kind='manual',position=''){ const s=current(), t=total(s);if(!Number.isSafeInteger(delta)||!Number.isSafeInteger(t+delta)){toast('Montant trop élevé');return}if(t+delta<0){toast('Impossible de perdre plus de jetons que ton stack');return}s.hands.push({id:uid(),delta,bb:s.bb,sb:s.sb,ante:s.ante,anteMode:s.anteMode,kind,position,note:$('handNote').value.trim(),createdAt:now()});$('amount').value='';$('handNote').value='';save();render();toast(delta===0?'Main enregistrée':(delta>0?'Gain enregistré':'Perte enregistrée'))}
+function pushHand(delta,kind='manual',position=''){ const s=current();if(s.result){toast('Tournoi clôturé : utilise Rouvrir / corriger');return;} const t=total(s);if(!Number.isSafeInteger(delta)||!Number.isSafeInteger(t+delta)){toast('Montant trop élevé');return}if(t+delta<0){toast('Impossible de perdre plus de jetons que ton stack');return}s.hands.push({id:uid(),delta,bb:s.bb,sb:s.sb,ante:s.ante,anteMode:s.anteMode,kind,position,note:$('handNote').value.trim(),createdAt:now()});$('amount').value='';$('handNote').value='';save();render();if(total(s)===0&&!s.result)showFinishOffer();toast(delta===0?'Main enregistrée':(delta>0?'Gain enregistré':'Perte enregistrée'))}
 function handleAmount(sign){const amt=cleanInt($('amount').value);if(!Number.isSafeInteger(amt)||amt<=0){$('amount').focus();toast('Entre un montant positif en jetons');return}pushHand(sign*amt)}
 $('win').addEventListener('click',()=>handleAmount(1));$('lose').addEventListener('click',()=>handleAmount(-1));$('skip').addEventListener('click',()=>pushHand(0,'skip'));
 $('amount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleAmount(1)}});
@@ -411,7 +458,7 @@ function updateBulkPreview(){
 $('bulkCount').addEventListener('input',drawBulkOrderRows);
 $('bulkFold').addEventListener('click',()=>{
  const plan=bulkFoldPlan();if(!plan||plan.includes(null)){toast('Vérifie la série de folds');return}
- const s=current(),cost=-plan.reduce((sum,h)=>sum+h.delta,0),stack=total(s);
+ const s=current();if(s.result){toast('Tournoi clôturé : utilise Rouvrir / corriger');return;} const cost=-plan.reduce((sum,h)=>sum+h.delta,0),stack=total(s);
  if(cost>stack){toast('Folds impossibles : mises obligatoires supérieures au stack');return}
  if(s.hands.length+plan.length>200000){toast('Limite de mains atteinte');return}
  const group=uid(),timestamp=Date.now();
@@ -421,7 +468,7 @@ $('bulkFold').addEventListener('click',()=>{
  s.hands.push(...entries);
  // Prête pour un prochain enregistrement ; pas de positions inférées automatiquement.
  $('bulkHandRows').replaceChildren();
- save();render();toast(`${entries.length} folds distincts enregistrés · −${fmt(cost)} jetons`);
+ save();render();if(total(s)===0&&!s.result)showFinishOffer();toast(`${entries.length} folds distincts enregistrés · −${fmt(cost)} jetons`);
 });
 
 $('updateBlinds').addEventListener('click',()=>{const sb=cleanInt($('sbInput').value),bb=cleanInt($('bbInput').value),ante=cleanInt($('anteInput').value),anteMode=$('anteMode').value;if(!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Vérifie les blindes et antes');return}const s=current();s.sb=sb;s.bb=bb;s.ante=ante;s.anteMode=anteMode;s.levelIndex=-1;save();render();toast('Blindes et antes mises à jour')});
@@ -515,7 +562,7 @@ $('toggleSettings').addEventListener('click',()=>{const show=$('settingsPanel').
 $('quickTournament').addEventListener('click',()=>{$('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');$('sessions').scrollIntoView({behavior:'smooth',block:'center'});$('sessions').focus({preventScroll:true})});
 $('toggleNew').addEventListener('click',()=>{$('newForm').classList.toggle('show')});
 $('newForm').addEventListener('submit',e=>{e.preventDefault();const stack=cleanInt($('newStack').value),sb=cleanInt($('newSB').value),bb=cleanInt($('newBB').value),ante=cleanInt($('newAnte').value),anteMode=$('newAnteMode').value,name=$('newName').value.trim();if(!name||!Number.isSafeInteger(stack)||stack<=0||!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Paramètres invalides');return}const s={id:uid(),name,startStack:stack,sb,bb,initialBB:bb,ante,anteMode,blindMode:'manual',blindLevels:[],levelIndex:-1,tableSize:10,createdAt:now(),hands:[]};data.sessions.push(s);data.activeId=s.id;save();$('newForm').classList.remove('show');$('settingsPanel').classList.remove('show');$('toggleSettings').setAttribute('aria-expanded','false');render();toast('Nouveau tournoi créé')});
-$('sessions').addEventListener('change',e=>{closeHandEditor();data.activeId=e.target.value;save();render()});
+$('sessions').addEventListener('change',e=>{closeHandEditor();$('finishPanel').hidden=true;data.activeId=e.target.value;save();render()});
 $('deleteTournament').addEventListener('click',()=>{if(!confirm('Supprimer ce tournoi et son historique ? Exporte une sauvegarde avant si nécessaire.'))return;closeHandEditor();const s=current();data.sessions=data.sessions.filter(x=>x.id!==s.id);if(!data.sessions.length){const d=sample();data.sessions=d.sessions}data.activeId=data.sessions[0].id;save();render();toast('Tournoi supprimé')});
 function download(content,type,filename){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}
 function slug(str){return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'tournoi'}
@@ -634,11 +681,11 @@ $('handEditForm').addEventListener('submit',event=>{
   if(selected<viewStart)viewStart=selected;
   else if(selected>=viewStart+visible)viewStart=Math.max(0,selected-visible+1);
  }
- suppressAutoFollowOnce=true;render();selectPoint(selected,true);
+ suppressAutoFollowOnce=true;render();selectPoint(selected,true);if(total(s)===0&&!s.result)showFinishOffer();
  toast(e.mode==='edit'?'Main corrigée · graphique recalculé':'Main insérée · graphique recalculé');
 });
 $('olderHands').addEventListener('click',()=>{historyLimit+=30;render()});
-function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);const played=playedHands(s);$('playedPercent').textContent=s.hands.length?(100*played/s.hands.length).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';$('playedDetail').textContent=fmt(played)+' / '+fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;configureBlindInterface();updateFoldLabel();syncBulkSetup();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
+function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;renderFinishStatus(s);$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);const played=playedHands(s);$('playedPercent').textContent=s.hands.length?(100*played/s.hands.length).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';$('playedDetail').textContent=fmt(played)+' / '+fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;configureBlindInterface();updateFoldLabel();syncBulkSetup();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
 const sel=$('sessions');if(sel.options.length!==data.sessions.length||[...sel.options].some((o,i)=>o.value!==data.sessions[i].id)){sel.replaceChildren();for(const session of data.sessions){const opt=document.createElement('option');opt.value=session.id;opt.textContent=session.name;sel.appendChild(opt)}}sel.value=s.id;
 const hist=$('history');hist.replaceChildren();
 if(historySessionId!==s.id){historySessionId=s.id;historyLimit=30}
@@ -708,6 +755,7 @@ function setGraphMode(mode){
  $('graphChips').setAttribute('aria-pressed',String(graphMode==='chips'));
  $('graphBB').setAttribute('aria-pressed',String(graphMode==='bb'));
  $('bbScaleGroup').hidden=graphMode!=='bb';
+ $('thresholdKey').hidden=graphMode!=='bb';
  if(!$('sharePanel').hidden)clearSharePreview();
  drawChart();
 }
@@ -722,6 +770,35 @@ $('graphChips').addEventListener('click',()=>setGraphMode('chips'));
 $('graphBB').addEventListener('click',()=>setGraphMode('bb'));
 $('scaleLinear').addEventListener('click',()=>setBBScale('linear'));
 $('scaleLog').addEventListener('click',()=>setBBScale('log'));
+// Repères naturels en BB. Même calcul pour la courbe interactive et l'image partagée.
+function bbTickValues(low,high,logarithmic,pixels){
+ const tx=v=>logarithmic?Math.log1p(Math.max(0,v)):v;
+ const itx=v=>logarithmic?Math.expm1(v):v;
+ const maxVal=itx(high);
+ const values=[0,.25,.5,1,2,5,10,20,40,80,160];
+ let value=160;
+ while(value<maxVal*1.1&&value<1000000000){value*=2;values.push(value)}
+ const candidates=values.filter(v=>tx(v)>=low-1e-8&&tx(v)<=high+1e-8);
+ if(candidates.length<2){
+  // Fenêtre très zoomée en BB : compléter par des valeurs intermédiaires lisibles.
+  return Array.from({length:5},(_,i)=>Math.max(0,itx(low+(high-low)*i/4)));
+ }
+ const ordered=[10,20,5,40,1,80,160,2,0,.5,.25,...values.filter(v=>v>160)];
+ const picked=[];
+ for(const v of ordered){
+  if(!candidates.includes(v))continue;
+  const py=(high-tx(v))/(high-low)*pixels;
+  if(picked.every(p=>Math.abs(py-p.y)>=22))picked.push({v,y:py});
+ }
+ return picked.sort((a,b)=>a.v-b.v).map(p=>p.v);
+}
+function levelChanges(points,start,end){
+ const out=[];
+ for(let i=Math.max(1,start);i<=end;i++){
+  if(points[i].blind!==points[i-1].blind)out.push({i,from:points[i-1].blind,to:points[i].blind});
+ }
+ return out;
+}
 function buildPoints(s){
  let running=s.startStack;
  const blind=s.initialBB||s.bb;
@@ -761,9 +838,11 @@ function updateSelected(points){
  $('selectedTitle').textContent=idx===0?'Départ du tournoi':'Main n° '+idx;
  $('selectedStack').textContent=fmt(p.chips)+' jetons';
  $('selectedBB').textContent=bbText(p.bb);
+ const prior=idx>0?points[idx-1]:null;
+ const levelText=prior&&p.blind!==prior.blind?` · ↑ BB ${fmt(prior.blind)} → ${fmt(p.blind)}`:'';
  $('selectedDetail').textContent=idx===0
   ? 'Stack initial · BB '+fmt(p.blind)
-  : (hand.delta>0?'+':'')+fmt(hand.delta)+' jetons · Blindes '+fmt(hand.sb??0)+' / '+fmt(p.blind)+' · Ante '+fmt(hand.ante??0)+' · '+new Date(hand.createdAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+  : (hand.delta>0?'+':'')+fmt(hand.delta)+' jetons · Blindes '+fmt(hand.sb??0)+' / '+fmt(p.blind)+' · Ante '+fmt(hand.ante??0)+levelText+' · '+new Date(hand.createdAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
  $('selectedNote').textContent=hand?.note?'📝 '+hand.note:'';
  $('editSelected').hidden=!hand;
 }
@@ -813,19 +892,58 @@ function drawChart(){
  if(span<1e-8){span=logarithmic?.32:Math.max(1,max*.15);min=Math.max(0,min-span*.5);max=max+span*.5}
  else {min=Math.max(0,min-span*.14);max=max+span*.14}
  span=Math.max(max-min,1e-8);
- const left=asBB?55:54,right=12,top=16,bottom=30;
+ const left=asBB?55:54,right=12,top=29,bottom=30;
  const gw=Math.max(w-left-right,1),gh=Math.max(h-top-bottom,1);
  const x=i=>left+(i-start)/Math.max(visible-1,1)*gw;
  const y=value=>top+(max-f(value))/span*gh;
- const tickLabel=value=>asBB?value.toLocaleString('fr-FR',{maximumFractionDigits:value<10?1:0})
+ const tickLabel=value=>asBB?value.toLocaleString('fr-FR',{maximumFractionDigits:value<10?2:1})
     :Math.abs(value)>=1000?(value/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+'k':Math.round(value).toLocaleString('fr-FR');
  ctx.font='11px system-ui,sans-serif';ctx.lineWidth=1;ctx.textBaseline='middle';ctx.textAlign='right';
- for(let j=0;j<5;j++){
-  const scaled=min+span*j/4,yy=top+gh-(j/4)*gh;
-  ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);ctx.strokeStyle='#293d50';ctx.stroke();
-  ctx.fillStyle='#9fb6c8';ctx.fillText(tickLabel(Math.max(0,inv(scaled))),left-8,yy);
+ const ticks=asBB&&logarithmic?bbTickValues(min,max,true,gh):Array.from({length:5},(_,j)=>Math.max(0,inv(min+span*j/4)));
+ for(const tick of ticks){
+  const yy=y(tick);
+  if(yy<top-1||yy>top+gh+1)continue;
+  const isTen=asBB&&Math.abs(tick-10)<1e-7;
+  const isTwenty=asBB&&Math.abs(tick-20)<1e-7;
+  ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);
+  if(isTen||isTwenty)ctx.setLineDash([5,5]);
+  ctx.strokeStyle=isTen?'#ff929184':isTwenty?'#f3cc7680':'#293d50';ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=isTen?'#ffb9b8':isTwenty?'#ffe2a0':'#9fb6c8';
+  ctx.fillText(tickLabel(tick),left-8,yy);
  }
- ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#9fb6c8';
+ // Lignes de référence 10 / 20 BB, même si elles ne font pas partie des ticks.
+ if(asBB)for(const [threshold,color] of [[10,'#ff9291'],[20,'#f3cc76']]){
+  if(f(threshold)<min||f(threshold)>max)continue;
+  const yy=y(threshold);
+  ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);
+  ctx.setLineDash([6,5]);ctx.lineWidth=1.3;ctx.strokeStyle=color+'b8';ctx.stroke();ctx.setLineDash([]);ctx.lineWidth=1;
+  // Étiquette côté droit, visible en plus de la graduation.
+  const txt=threshold+' BB';ctx.font='bold 10px system-ui,sans-serif';
+  const tw=ctx.measureText(txt).width+12;
+  ctx.fillStyle='#0c1826e8';ctx.fillRect(w-right-tw-1,yy-10,tw,20);
+  ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(txt,w-right-tw/2-1,yy);
+  ctx.font='11px system-ui,sans-serif';ctx.textAlign='right';
+ }
+ // Le premier point d'un niveau reçoit son trait vertical. Pas de décalage de l'historique.
+ const changes=levelChanges(points,start,end);
+ let lastBadgeX=-Infinity;
+ for(const change of changes){
+  const xx=x(change.i);
+  ctx.beginPath();ctx.moveTo(xx,top);ctx.lineTo(xx,top+gh);
+  ctx.setLineDash([3,5]);ctx.strokeStyle='#79b9eeaa';ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);
+  // Toujours tracer le trait, mais espacer les petits libellés sur mobile.
+  const txt='BB '+tickLabel(change.to);
+  ctx.font='bold 10px system-ui,sans-serif';
+  const tw=ctx.measureText(txt).width+11;
+  const bx=clamp(xx-tw/2,left,w-right-tw);
+  if(bx-lastBadgeX>=tw+5){
+   ctx.fillStyle='#234359';ctx.fillRect(bx,6,tw,17);
+   ctx.fillStyle='#d4ecff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,bx+tw/2,14.5);
+   lastBadgeX=bx;
+  }
+ }
+ ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#9fb6c8';ctx.font='11px system-ui,sans-serif';
  ctx.fillText('Main '+start,left+20,h-24);
  if(end>start)ctx.fillText('Main '+end,w-right-23,h-24);
  // On dessine uniquement les points compris dans la fenêtre de zoom.
@@ -840,7 +958,6 @@ function drawChart(){
   for(let i=start;i<=end;i++){const xx=x(i),yy=y(v(points[i]));if(i===start)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy)}
   ctx.strokeStyle='#2dd4a7';ctx.lineWidth=2.4;ctx.lineJoin='round';ctx.stroke();
  }
- // Point le plus récent de la fenêtre.
  ctx.fillStyle='#2dd4a7';ctx.beginPath();ctx.arc(x(end),y(v(points[end])),3.5,0,Math.PI*2);ctx.fill();
  // Curseur persistant de sélection, visible au doigt et à la souris.
  if(selectedIndex>=start&&selectedIndex<=end){
@@ -849,7 +966,6 @@ function drawChart(){
   ctx.strokeStyle='#f7d989a8';ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);
   ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle='#f9d484';ctx.fill();
   ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fillStyle='#152434';ctx.fill();
-  // Étiquette intégrée, sans masquer le point sélectionné.
   const label='M'+selectedIndex+' · '+(asBB?bbText(points[selectedIndex].bb):fmt(points[selectedIndex].chips)+' jetons');
   ctx.font='bold 11px system-ui,sans-serif';const labelW=Math.min(w-18,ctx.measureText(label).width+20);
   const bx=clamp(px-labelW/2,5,w-labelW-5);
@@ -861,7 +977,7 @@ function drawChart(){
  chartState={start,end,count,left,right,gw,w,points};
  updateNav(count,visible,start);
  updateSelected(points);
- canvas.setAttribute('aria-label',`Graphique interactif en ${asBB?'BB':'jetons'}. Main sélectionnée ${selectedIndex} sur ${count-1}. Utilise les flèches gauche et droite pour parcourir les mains.`);
+ canvas.setAttribute('aria-label',`Graphique interactif en ${asBB?'BB':'jetons'}. Main sélectionnée ${selectedIndex} sur ${count-1}. Les traits verticaux indiquent les changements de BB.`);
 }
 function chooseFromEvent(event){
  const state=chartState;if(!state)return;
@@ -982,13 +1098,34 @@ function shareChart(c,points,x,y,w,h,asBB,scale){
  else{lo=Math.max(0,lo-dif*.16);hi+=dif*.16}
  const ty=v=>top+(hi-map(v))/(hi-lo)*(bottom-top);
  const tx=i=>left+(points.length===1?(right-left)/2:i/(points.length-1)*(right-left));
- const axis=v=>asBB?(v>=100?fmt(Math.round(v)):v.toLocaleString('fr-FR',{maximumFractionDigits:1})):v>=1000?(v/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+'k':fmt(Math.round(v));
+ const axis=v=>asBB?(v>=100?fmt(Math.round(v)):v.toLocaleString('fr-FR',{maximumFractionDigits:v<10?2:1})):v>=1000?(v/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+'k':fmt(Math.round(v));
  c.font='23px system-ui,Arial,sans-serif';
- for(let j=0;j<5;j++){
-  const yy=bottom-(bottom-top)*j/4;
-  c.beginPath();c.moveTo(left,yy);c.lineTo(right,yy);c.strokeStyle='#30485d';c.lineWidth=1.6;c.stroke();
-  const label=axis(Math.max(0,inv(lo+(hi-lo)*j/4)));
-  cardText(c,label,left-14,yy+9,23,'#a0b7c8','500','right');
+ const ticks=asBB&&useLog?bbTickValues(lo,hi,true,bottom-top):Array.from({length:5},(_,j)=>Math.max(0,inv(lo+(hi-lo)*j/4)));
+ for(const tick of ticks){
+  const yy=ty(tick);if(yy<top-1||yy>bottom+1)continue;
+  const ref=asBB&&(tick===10||tick===20);
+  c.beginPath();c.moveTo(left,yy);c.lineTo(right,yy);
+  if(ref)c.setLineDash([9,9]);
+  c.strokeStyle=ref?(tick===10?'#ff929170':'#f3cc7670'):'#30485d';c.lineWidth=1.6;c.stroke();c.setLineDash([]);
+  cardText(c,axis(tick),left-14,yy+9,23,ref?'#ffe2a0':'#a0b7c8','500','right');
+ }
+ if(asBB)for(const [threshold,color] of [[10,'#ff9291'],[20,'#f3cc76']]){
+  if(map(threshold)<lo||map(threshold)>hi)continue;
+  const yy=ty(threshold);
+  c.beginPath();c.moveTo(left,yy);c.lineTo(right,yy);c.setLineDash([10,8]);
+  c.strokeStyle=color;c.lineWidth=2;c.stroke();c.setLineDash([]);
+  c.fillStyle='#102131';c.fillRect(right-112,yy-15,112,29);
+  cardText(c,threshold+' BB',right-7,yy+7,22,color,'750','right');
+ }
+ // Repères verticaux pour les changements réels dans l'historique des blindes.
+ let lastLabel=-Infinity;
+ for(const change of levelChanges(points,0,points.length-1)){
+  const xx=tx(change.i);
+  c.beginPath();c.moveTo(xx,top);c.lineTo(xx,bottom);
+  c.setLineDash([7,8]);c.strokeStyle='#79b9eea0';c.lineWidth=2;c.stroke();c.setLineDash([]);
+  if(xx-lastLabel>105){
+   cardText(c,'BB '+fmt(change.to),Math.min(right-10,xx+10),top-7,18,'#b9e2ff','700');lastLabel=xx;
+  }
  }
  c.beginPath();c.moveTo(tx(0),bottom);
  for(let i=0;i<points.length;i++)c.lineTo(tx(i),ty(val(points[i])));
@@ -1000,7 +1137,7 @@ function shareChart(c,points,x,y,w,h,asBB,scale){
   points.forEach((p,i)=>{if(i)c.lineTo(tx(i),ty(val(p)))});
   c.lineWidth=5;c.strokeStyle='#2dd4a7';c.lineJoin='round';c.lineCap='round';c.stroke();
  }
- const last=points[points.length-1];const endX=tx(points.length-1),endY=ty(val(last));
+ const last=points[points.length-1],endX=tx(points.length-1),endY=ty(val(last));
  c.beginPath();c.arc(endX,endY,9,0,Math.PI*2);c.fillStyle='#f6d585';c.fill();
  cardText(c,'DÉPART',left,bottom+42,23,'#9fb7c8','700');
  cardText(c,`${points.length-1} MAINS`,right,bottom+42,23,'#9fb7c8','700','right');
@@ -1079,6 +1216,201 @@ $('shareImageBtn').addEventListener('click',async()=>{
   catch(e){if(e.name==='AbortError')return}
  }
  downloadShareBlob(blob);toast('Image téléchargée : tu peux l’envoyer sur WhatsApp');
+});
+
+
+// V13 : PDF généré directement sur le téléphone, sans API ni connexion.
+// Le pourcentage de mains jouées est l'indicateur simplifié de STACK, pas le VPIP.
+function reportStats(s){
+ let stack=s.startStack, maxStack=stack, maxBB=stack/(s.initialBB||s.bb);
+ let minPositive=stack>0?stack:Infinity, totalForced=0;
+ const gains=[],losses=[], top=[],groups=[
+  {name:'Plus de 40 BB',n:0,played:0}, {name:'20 à 40 BB',n:0,played:0},
+  {name:'10 à 20 BB',n:0,played:0}, {name:'Moins de 10 BB',n:0,played:0}
+ ];
+ let totalPlayed=0;
+ s.hands.forEach((h,i)=>{
+  const big=h.bb>0?h.bb:s.bb;
+  const beforeBB=stack/big;
+  const group=beforeBB>40?0:beforeBB>=20?1:beforeBB>=10?2:3;
+  groups[group].n++;
+  const played=h.kind!=='fold'&&h.kind!=='skip'&&h.delta!==0;
+  if(played){
+   totalPlayed++;groups[group].played++;
+   const change=h.delta/big;
+   if(change>0)gains.push(change);else losses.push(-change);
+   top.push({number:i+1,delta:change,note:h.note||''});
+  }
+  if(h.kind==='fold')totalForced-=h.delta;
+  stack+=h.delta;
+  maxStack=Math.max(maxStack,stack);
+  maxBB=Math.max(maxBB,stack/big);
+  if(stack>0)minPositive=Math.min(minPositive,stack);
+ });
+ const avg=v=>v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
+ top.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+ return {hands:s.hands.length,played:totalPlayed,percent:s.hands.length?100*totalPlayed/s.hands.length:null,
+  wins:gains.length,losses:losses.length,averageGain:avg(gains),averageLoss:avg(losses),
+  totalGains:gains.reduce((a,b)=>a+b,0),totalLosses:losses.reduce((a,b)=>a+b,0),
+  maxGain:gains.length?gains.reduce((a,b)=>Math.max(a,b),0):null,maxLoss:losses.length?losses.reduce((a,b)=>Math.max(a,b),0):null,
+  maxStack,maxBB,minPositive:Number.isFinite(minPositive)?minPositive:0,totalForced,top:top.slice(0,5),groups,
+  points:buildPoints(s)};
+}
+function renderFinishStatus(s){
+ const result=s.result;
+ $('finishedTag').textContent=result?'Tournoi clôturé':'';
+ $('finishQuick').textContent=result?'📄 Voir le bilan PDF':'🏁 Clôturer / bilan PDF';
+ // Le formulaire est réutilisable pour corriger un classement après clôture.
+ const opened=!$('finishPanel').hidden;
+ $('finishSummary').hidden=!result;
+ if(result){
+  $('finishSummary').textContent='Clôturé le '+new Date(result.endedAt).toLocaleDateString('fr-FR')+
+   ' · '+({elimine:'Éliminé',vainqueur:'Vainqueur',termine:'Terminé'}[result.status])+
+   (result.rank?' · '+result.rank+'e place':'')+' · Rapport disponible ci-dessous.';
+ }
+ $('reportDownload').disabled=!result;
+ $('finishReopen').hidden=!result;
+ $('finishForm').hidden=!!result;
+ $('finishAutoHint').textContent=result?'Archivé':total(s)===0?'Stack à zéro':'Clôture manuelle';
+ if(opened)$('finishIntro').textContent=result?'Tournoi archivé. Exporte le PDF ou rouvre le tournoi pour continuer.':total(s)===0?'Ton stack est à zéro. Confirme la clôture ou corrige une erreur.':'Tu peux clôturer ce tournoi, même avec des jetons restants.';
+}
+function showFinishOffer(){
+ const s=current();if(s.result)return;
+ $('finishPanel').hidden=false;
+ $('finishStatus').value=total(s)===0?'elimine':'termine';
+ $('finishRank').value='';$('finishPlayers').value='';$('finishNote').value='';
+ renderFinishStatus(s);
+ $('finishPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+$('finishQuick').addEventListener('click',()=>{
+ const s=current();$('finishPanel').hidden=false;
+ if(s.result){$('finishStatus').value=s.result.status;$('finishRank').value=s.result.rank||'';
+  $('finishPlayers').value=s.result.players||'';$('finishNote').value=s.result.note||'';
+ }else $('finishStatus').value=total(s)===0?'elimine':'termine';
+ renderFinishStatus(s);$('finishPanel').scrollIntoView({behavior:'smooth',block:'start'});
+});
+$('finishCancel').addEventListener('click',()=>{$('finishPanel').hidden=true});
+$('finishReopen').addEventListener('click',()=>{
+ const s=current();if(!confirm('Rouvrir ce tournoi pour reprendre le suivi ou modifier le résultat ?'))return;
+ s.result=null;save();render();$('finishPanel').hidden=true;toast('Tournoi rouvert');
+});
+$('finishForm').addEventListener('submit',ev=>{
+ ev.preventDefault();const s=current();
+ const rankStr=$('finishRank').value.trim(),playersStr=$('finishPlayers').value.trim();
+ const rank=rankStr?cleanInt(rankStr):null,players=playersStr?cleanInt(playersStr):null;
+ if((rank!==null&&(!Number.isSafeInteger(rank)||rank<1))||(players!==null&&(!Number.isSafeInteger(players)||players<1))||(rank&&players&&rank>players)){
+  toast('Vérifie la place et le nombre de participants');return;
+ }
+ const status=$('finishStatus').value;
+ if(status==='elimine'&&total(s)>0&&!confirm('Le stack est supérieur à zéro. Clôturer quand même comme éliminé ?'))return;
+ s.result={status,rank,players,note:$('finishNote').value.trim(),endedAt:now()};
+ save();render();toast('Tournoi clôturé · Bilan PDF disponible');
+});
+
+// Mini générateur PDF vectoriel WinAnsi : deux pages A4, fonctionnant hors ligne.
+function pdfReport(s,st){
+ const W=595.28,H=841.89, BLUE=[0.15,0.42,0.73], NAVY=[0.06,0.12,0.20],MUTED=[0.38,0.44,0.52],GREEN=[0.07,0.55,0.39],RED=[0.77,0.22,0.29],GOLD=[0.78,0.55,0.14];
+ const pages=[[],[]];let out=pages[0];
+ const num=x=>Number(x).toFixed(2), rgb=col=>col.map(num).join(' ');
+ const plain=v=>String(v??'').replace(/[’‘]/g,"'").replace(/[–—−]/g,'-').replace(/[→⇒]/g,'>').replace(/[…]/g,'...').replace(/[•·]/g,'-').replace(/[\u00a0\u202f]/g,' ').replace(/[\u0100-\uffff]/g,'?');
+ const esc=v=>plain(v).replace(/[\\()]/g,c=>'\\'+c);
+ function rect(x,y,w,h,color){out.push(`${rgb(color)} rg ${num(x)} ${num(y)} ${num(w)} ${num(h)} re f`)}
+ function stroke(x1,y1,x2,y2,color,width=1,dash=false){out.push(`${rgb(color)} RG ${num(width)} w ${dash?'[3 4] 0 d':'[] 0 d'} ${num(x1)} ${num(y1)} m ${num(x2)} ${num(y2)} l S`)}
+ function tx(v,x,y,size=10,color=NAVY,bold=false){out.push(`BT /${bold?'F2':'F1'} ${num(size)} Tf ${rgb(color)} rg 1 0 0 1 ${num(x)} ${num(y)} Tm (${esc(v)}) Tj ET`)}
+ function fmt1(n){return n===null?'—':n.toLocaleString('fr-FR',{maximumFractionDigits:1})}
+ function lineText(v,x,y,maxchars=95,size=9,color=NAVY,bold=false){
+  const words=plain(v).split(/\s+/);let row='',yy=y,shown=0;
+  for(const word of words){if((row+' '+word).length>maxchars&&row){tx(row,x,yy,size,color,bold);row=word;yy-=13;shown++;if(shown>=2)break;}else row+=(row?' ':'')+word;}
+  if(row&&shown<2)tx(row,x,yy,size,color,bold);
+ }
+ function topTitle(title,desc,page){rect(0,H-109,W,109,NAVY);tx('STACK  /  BILAN DE TOURNOI',36,H-36,12,[0.38,0.89,0.76],true);tx(title,36,H-68,19,[1,1,1],true);tx(desc,36,H-91,9,[0.75,0.82,0.89]);stroke(36,35,W-36,35,[0.83,0.85,0.87]);tx('Généré par STACK  -  Statistiques indicatives',36,21,8,MUTED);tx(`${page} / 2`,W-65,21,8,MUTED)}
+ function section(title,y){tx(title,37,y,11,NAVY,true);stroke(37,y-8,W-37,y-8,[0.83,0.87,0.90],.7)}
+ function metric(x,y,w,title,value,color=NAVY){rect(x,y-53,w,65,[0.95,0.97,0.98]);tx(title,x+11,y-7,8,MUTED);tx(value,x+11,y-30,15,color,true)}
+ function plot(points,x,y,width,height,mode){
+  const left=x+36,bottom=y+31,pw=width-47,ph=height-56;
+  rect(x,y,width,height,[0.969,0.978,0.986]);
+  const vals=points.map(p=>mode==='bb'?p.bb:p.chips);
+  const max=vals.reduce((m,v)=>Math.max(m,v),1),f=mode==='bb'?v=>Math.log1p(Math.max(0,v)):v=>Math.max(0,v);
+  const upper=f(max*1.13),mapY=v=>bottom+(upper?f(v)/upper:0)*ph;
+  const mapX=i=>left+(i/Math.max(1,points.length-1))*pw;
+  const ticks=mode==='bb'?[0,1,5,10,20,40,80,160,320,640,1280].filter(v=>v<=max*1.13):[0,.25,.5,.75,1].map(v=>Math.round(max*1.13*v));
+  for(const t of ticks){const gy=mapY(t);stroke(left,gy,left+pw,gy,[0.86,0.89,0.92],.6);tx(mode==='bb'?String(t):String(Math.round(t/1000))+'k',x+3,gy-3,7,MUTED)}
+  if(mode==='bb')for(const [v,col] of [[10,RED],[20,GOLD]]){if(v<=max*1.13){const yy=mapY(v);stroke(left,yy,left+pw,yy,col,1,true)}}
+  const jump=[];
+  for(let i=1;i<points.length;i++)if(points[i].blind!==points[i-1].blind)jump.push(i);
+  for(const idx of jump){stroke(mapX(idx),bottom,mapX(idx),bottom+ph,[0.54,0.69,0.86],.7,true)}
+  out.push(`${rgb(BLUE)} RG 1.5 w [] 0 d`);
+  const step=Math.max(1,Math.ceil(points.length/4000));let first=true;
+  for(let i=0;i<points.length;i+=step){out.push(`${num(mapX(i))} ${num(mapY(vals[i]))} ${first?'m':'l'}`);first=false;}
+  if((points.length-1)%step!==0)out.push(`${num(mapX(points.length-1))} ${num(mapY(vals[vals.length-1]))} l`);
+  out.push('S');
+  for(const idx of [0,Math.round((points.length-1)/2),points.length-1]){tx(String(idx),mapX(idx)-6,y+13,8,MUTED)}
+  tx('Mains',x+width-55,y+13,7,MUTED);
+  return jump.length;
+ }
+ const r=s.result||{};
+ const date=new Date(r.endedAt||now()).toLocaleDateString('fr-FR');
+ const status={elimine:'Éliminé',vainqueur:'Vainqueur',termine:'Terminé'}[r.status]||'Terminé';
+ const place=r.rank?`${r.rank}${r.rank===1?'er':'e'} / ${r.players||'?'}`:(r.players?`? / ${r.players}`:'Non précisée');
+ topTitle(s.name.slice(0,47),date+'   |   '+status+'   |   Classement : '+place,1);
+ metric(37,696,167,'Mains distribuées',fmt(st.hands));metric(214,696,167,'Mains jouées',fmt(st.played));
+ metric(391,696,167,'Mains jouées (%)',st.percent===null?'—':fmt1(st.percent)+' %',GREEN);
+ section('ÉVOLUTION DU STACK EN BB',619);
+ plot(st.points,37,345,521,257,'bb');
+ tx('Echelle ln(1+BB) - 10 BB (rouge), 20 BB (ocre), nouvelles BB (verticales)',39,336,8,MUTED);
+ section('GAINS ET PERTES - MAINS JOUÉES',307);
+ metric(37,280,167,'Gain moyen',st.averageGain===null?'—':'+'+fmt1(st.averageGain)+' BB',GREEN);
+ metric(214,280,167,'Perte moyenne',st.averageLoss===null?'—':'-'+fmt1(st.averageLoss)+' BB',RED);
+ metric(391,280,167,'Stack max.',fmt(st.maxStack)+' jetons',NAVY);
+ tx(`${st.wins} mains gagnantes    -    ${st.losses} mains perdantes`,39,190,9,NAVY);
+ tx('Pertes des folds automatiques : '+fmt(st.totalForced)+' jetons (hors moyennes)',39,170,9,MUTED);
+ tx('Moyennes = variation nette / BB en vigueur sur chaque main jouée.',39,150,8,MUTED);
+ tx('Les folds automatiques et mains sans variation sont exclus des moyennes.',39,137,8,MUTED);
+ if(r.note){section('NOTE DE FIN DE TOURNOI',115);lineText(r.note,40,96,95,8,MUTED)}
+ // PAGE 2
+ out=pages[1];topTitle('ANALYSE DETAILLEE',s.name.slice(0,60)+'   |   '+date,2);
+ section('EVOLUTION EN JETONS',705);plot(st.points,37,457,521,233,'chips');
+ section('MAINS JOUEES SELON LA PROFONDEUR',427);
+ const headings=[39,245,354,454];
+ ['Stack avant main','Mains','Jouées','Taux'].forEach((txt,i)=>tx(txt,headings[i],402,9,MUTED,true));
+ st.groups.forEach((g,i)=>{const y=380-i*29;rect(37,y-9,521,27,i%2===0?[0.958,0.970,0.98]:[1,1,1]);
+  tx(g.name,headings[0],y,9,NAVY);tx(fmt(g.n),headings[1],y,9,NAVY);tx(fmt(g.played),headings[2],y,9,NAVY);
+  tx(g.n?fmt1(100*g.played/g.n)+' %':'—',headings[3],y,9,NAVY,true);
+ });
+ section('5 PRINCIPALES VARIATIONS DE STACK',246);
+ if(!st.top.length)tx('Aucune main avec gain ou perte enregistrée.',39,221,9,MUTED);
+ st.top.forEach((h,i)=>{const y=219-i*24;
+  const label=`#${h.number}    ${h.delta>0?'+':''}${fmt1(h.delta)} BB`;
+  tx(label,40,y,9,h.delta>=0?GREEN:RED,true);
+  tx(plain(h.note).slice(0,61),156,y,8,MUTED);
+ });
+ tx(`Gains cumulés : +${fmt1(st.totalGains)} BB    -    Pertes cumulées : -${fmt1(st.totalLosses)} BB`,39,76,9,NAVY,true);
+ tx('Calcul sur les coups joués, hors folds automatiques ; pas un indicateur de ROI.',39,60,8,MUTED);
+ const utf8Byte=ch=>{const c=ch.charCodeAt(0);return c<=255?c:63};
+ const bytes=v=>Uint8Array.from(v,utf8Byte);
+ const objects=[];const add=obj=>(objects.push(obj),objects.length);
+ const catalog=add('<< /Type /Catalog /Pages 2 0 R >>');
+ add('<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>');
+ add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 7 0 R /F2 8 0 R >> >> /Contents 5 0 R >>');
+ add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 7 0 R /F2 8 0 R >> >> /Contents 6 0 R >>');
+ const streams=pages.map(lines=>lines.join('\n')+'\n');
+ for(const str of streams)add(`<< /Length ${bytes(str).length} >>\nstream\n${str}endstream`);
+ add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+ add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+ let pdf='%PDF-1.4\n%STACK\n',offsets=[0];
+ for(let i=0;i<objects.length;i++){offsets.push(bytes(pdf).length);pdf+=`${i+1} 0 obj\n${objects[i]}\nendobj\n`}
+ const xref=bytes(pdf).length;
+ pdf+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;
+ for(let i=1;i<offsets.length;i++)pdf+=`${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
+ pdf+=`trailer\n<< /Size ${objects.length+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+ return new Blob([bytes(pdf)],{type:'application/pdf'});
+}
+$('reportDownload').addEventListener('click',()=>{
+ const s=current();if(!s.result){toast('Clôture le tournoi pour générer le bilan');return}
+ try{const stats=reportStats(s),blob=pdfReport(s,stats),url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='STACK-bilan-'+slug(s.name)+'.pdf';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Bilan PDF téléchargé - 2 pages');
+ }catch(err){console.error(err);toast('Erreur de création du PDF : '+err.message)}
 });
 
 save();render();setBBScale(bbScale);setGraphMode(graphMode);
