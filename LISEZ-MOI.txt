@@ -1,0 +1,19 @@
+STACK V19 - logo n°3 : jeton bleu + courbe verte
+
+Contient :
+index.html et sw.js + manifest.webmanifest, dossier icons/
+
+MISE À JOUR DANS GITHUB (webfab83/poker-stack-tracker) :
+1. SAUVEGARDER les tournois au format JSON dans STACK.
+2. Téléverser à la RACINE : index.html, sw.js, manifest.webmanifest.
+3. Dans le dossier icons/ du dépôt, téléverser les quatre PNG du dossier icons/ de ce ZIP.
+4. Confirmer Commit changes, attendre la coche verte GitHub Pages.
+5. Ouvrir la page https://webfab83.github.io/poker-stack-tracker/ dans Chrome avec Internet ; actualiser.
+6. Fermer et rouvrir STACK. Android peut conserver temporairement l'ancienne icône de l'app installée.
+
+Nouveautés :
+- Logo n°3 comme icône PWA Android, icône onglet et dans l'en-tête STACK.
+- Le même logo, en petit dans l'en-tête de chacune des 2 pages du bilan PDF.
+- Les fonctions et données V18 restent inchangées ; pas de changement de stockage.
+
+NE PAS désinstaller ni effacer les données de STACK pour forcer l'icône, sinon risque de perte de tournois.
