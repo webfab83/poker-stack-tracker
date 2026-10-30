@@ -1,34 +1,30 @@
-/* Pas de données personnelles dans le cache du service worker. */
-const CACHE_NAME = 'stack-poker-pwa-v21-navigation-mains-20261030';
-const ASSETS = [
-  './index.html', './manifest.webmanifest?v=19',
-  './icons/icon-192-v19.png', './icons/icon-512-v19.png',
-  './icons/icon-maskable-512-v19.png', './icons/apple-touch-icon-v19.png',
-  './icons/icon-192-android-v20.png', './icons/icon-512-android-v20.png', './icons/icon-maskable-512-android-v20.png'
-];
+/* STACK V22 : cache isolé. Les tournois restent dans localStorage, jamais dans le cache. */
+const CACHE_NAME = 'stack-poker-pwa-v22-revue-navigation-20261030';
+const INDEX_URL = './index.html';
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE_NAME)
+    .then(cache => cache.add(INDEX_URL))
+    .then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('stack-poker-pwa-') && key !== CACHE_NAME).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil(caches.keys().then(keys => Promise.all(
+    keys.filter(k => k.startsWith('stack-poker-pwa-') && k !== CACHE_NAME)
+      .map(k => caches.delete(k))
+  )).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  // La page se met à jour en ligne, tout en restant disponible hors connexion.
   if (event.request.mode === 'navigate') {
     event.respondWith(fetch(event.request).then(response => {
       if (response.ok) {
         const copy = response.clone();
-        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put('./index.html', copy)));
+        event.waitUntil(caches.open(CACHE_NAME).then(c => c.put(INDEX_URL, copy)));
       }
       return response;
-    }).catch(() => caches.match('./index.html')));
+    }).catch(() => caches.match(INDEX_URL)));
     return;
   }
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+  // Les autres fichiers sont chargés normalement, sans toucher au manifeste/icônes.
 });

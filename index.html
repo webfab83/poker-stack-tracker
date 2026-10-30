@@ -183,44 +183,39 @@ header{margin-bottom:12px}
 #finishPanel{scroll-margin-top:12px}
 @media(max-width:380px){.finish-fields{grid-template-columns:1fr}.finish-fields .full-row{grid-column:auto}}
 
-/* V21 — Revue des mains : les flèches précédentes/suivantes restent fixées à droite.
-   Seules les informations (stack, BB) se replient sur plusieurs lignes. */
-.selected-hand .selected-main{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) max-content;
-  align-items:start;
-  gap:10px;
+/* V22 — En-tête de revue des mains : navigation TOUJOURS à droite,
+   sur une ligne qui lui est réservée. Les valeurs sont EN DESSOUS.
+   Ni les montants, ni les notes ne peuvent décaler les deux boutons. */
+#selectedCard .selected-main { display:block; min-width:0; }
+#selectedCard .selected-headline {
+  width:100%; display:grid; grid-template-columns:minmax(0,1fr) 98px;
+  align-items:center; column-gap:8px; min-height:44px;
 }
-.selected-hand .selected-main>div:first-child{min-width:0}
-.selected-hand .selected-values{min-width:0;max-width:100%;flex-wrap:wrap}
-.selected-hand .selected-values strong{min-width:0;overflow-wrap:anywhere;word-break:normal}
-.selected-hand .selected-actions{
-  display:flex;
-  flex-wrap:nowrap;
-  gap:7px;
-  justify-self:end;
-  align-self:start;
-  flex-shrink:0;
-  margin:0;
+#selectedCard .selected-headline > .kicker {
+  min-width:0; overflow-wrap:anywhere; line-height:1.3;
 }
-.selected-hand .selected-actions button{
-  flex:0 0 43px;
-  width:43px;
-  height:43px;
-  padding:0;
-  display:grid;
-  place-items:center;
+#selectedCard .selected-actions {
+  display:grid; grid-template-columns:44px 44px;
+  width:98px; gap:10px; flex-wrap:nowrap;
+  align-items:center; justify-content:end;
+  margin:0; padding:0;
 }
-@media(max-width:365px){
-  .selected-hand .selected-main{gap:7px}
-  .selected-hand .selected-actions{gap:6px}
-  .selected-hand .selected-actions button{flex-basis:41px;width:41px;height:43px;min-width:41px}
+#selectedCard .selected-actions button {
+  display:grid; place-items:center; width:44px; height:44px;
+  min-width:44px; min-height:44px; padding:0; margin:0;
+  flex:unset;
 }
+#selectedCard .selected-values {
+  display:flex; flex-wrap:wrap; align-items:baseline;
+  max-width:100%; min-width:0; margin-top:8px; overflow-wrap:anywhere;
+}
+#selectedCard .selected-values strong { min-width:0; overflow-wrap:anywhere; }
+.app-build{font-weight:600;color:#89a6ba;font-size:0.6rem;margin-left:4px;vertical-align:top}
 </style>
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V22</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -335,8 +330,12 @@ header{margin-bottom:12px}
  <div class="chartbox"><canvas id="chart" tabindex="0" role="img" aria-label="Graphique interactif. Toucher une position pour sélectionner une main. Flèches du clavier : main précédente ou suivante."></canvas></div>
  <div class="chart-key" id="chartKey" aria-label="Repères du graphique"><span id="thresholdKey" class="chart-key-items"><span class="key-stroke key-ten"></span>10 BB <span class="key-stroke key-twenty"></span>20 BB</span><span class="chart-key-item"><span class="key-vertical"></span>Changement de BB (n° de main)</span></div>
  <div class="chart-nav"><label for="chartPan" class="sr-only">Déplacer la zone visible</label><input type="range" id="chartPan" min="0" max="0" step="1" value="0" aria-label="Faire défiler le graphique horizontalement"><span id="visibleRange">Toutes les mains</span></div>
- <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main"><div><span class="kicker" id="selectedTitle">Départ</span><div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div></div>
-  <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div></div>
+ <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main">
+  <div class="selected-headline"><span class="kicker" id="selectedTitle">Départ</span>
+   <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div>
+  </div>
+  <div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div>
+ </div>
   <div class="selected-detail" id="selectedDetail">Stack de départ</div><div id="selectedNote"></div><button type="button" class="mini-btn" id="editSelected" hidden>✎ Modifier cette main</button></div>
 
 
