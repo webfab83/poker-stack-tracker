@@ -1,9 +1,10 @@
 /* Pas de données personnelles dans le cache du service worker. */
-const CACHE_NAME = 'stack-poker-pwa-v19-logo3-pdf-20261030';
+const CACHE_NAME = 'stack-poker-pwa-v20-android-id-compatible-20261030';
 const ASSETS = [
   './index.html', './manifest.webmanifest?v=19',
   './icons/icon-192-v19.png', './icons/icon-512-v19.png',
-  './icons/icon-maskable-512-v19.png', './icons/apple-touch-icon-v19.png'
+  './icons/icon-maskable-512-v19.png', './icons/apple-touch-icon-v19.png',
+  './icons/icon-192-android-v20.png', './icons/icon-512-android-v20.png', './icons/icon-maskable-512-android-v20.png'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
