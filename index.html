@@ -299,7 +299,7 @@ header{margin-bottom:12px}
   <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
  </div>
  <div class="chartbox"><canvas id="chart" tabindex="0" role="img" aria-label="Graphique interactif. Toucher une position pour sélectionner une main. Flèches du clavier : main précédente ou suivante."></canvas></div>
- <div class="chart-key" id="chartKey" aria-label="Repères du graphique"><span id="thresholdKey" class="chart-key-items"><span class="key-stroke key-ten"></span>10 BB <span class="key-stroke key-twenty"></span>20 BB</span><span class="chart-key-item"><span class="key-vertical"></span>Changement de BB</span></div>
+ <div class="chart-key" id="chartKey" aria-label="Repères du graphique"><span id="thresholdKey" class="chart-key-items"><span class="key-stroke key-ten"></span>10 BB <span class="key-stroke key-twenty"></span>20 BB</span><span class="chart-key-item"><span class="key-vertical"></span>Changement de BB (#main)</span></div>
  <div class="chart-nav"><label for="chartPan" class="sr-only">Déplacer la zone visible</label><input type="range" id="chartPan" min="0" max="0" step="1" value="0" aria-label="Faire défiler le graphique horizontalement"><span id="visibleRange">Toutes les mains</span></div>
  <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main"><div><span class="kicker" id="selectedTitle">Départ</span><div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div></div>
   <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div></div>
@@ -933,7 +933,7 @@ function drawChart(){
   ctx.beginPath();ctx.moveTo(xx,top);ctx.lineTo(xx,top+gh);
   ctx.setLineDash([3,5]);ctx.strokeStyle='#79b9eeaa';ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);
   // Toujours tracer le trait, mais espacer les petits libellés sur mobile.
-  const txt='BB '+tickLabel(change.to);
+  const txt='#'+change.i+' · BB '+tickLabel(change.to);
   ctx.font='bold 10px system-ui,sans-serif';
   const tw=ctx.measureText(txt).width+11;
   const bx=clamp(xx-tw/2,left,w-right-tw);
@@ -1124,7 +1124,7 @@ function shareChart(c,points,x,y,w,h,asBB,scale){
   c.beginPath();c.moveTo(xx,top);c.lineTo(xx,bottom);
   c.setLineDash([7,8]);c.strokeStyle='#79b9eea0';c.lineWidth=2;c.stroke();c.setLineDash([]);
   if(xx-lastLabel>105){
-   cardText(c,'BB '+fmt(change.to),Math.min(right-10,xx+10),top-7,18,'#b9e2ff','700');lastLabel=xx;
+   cardText(c,'#'+change.i+' · BB '+fmt(change.to),Math.min(right-10,xx+10),top-7,18,'#b9e2ff','700');lastLabel=xx;
   }
  }
  c.beginPath();c.moveTo(tx(0),bottom);
@@ -1307,6 +1307,7 @@ $('finishForm').addEventListener('submit',ev=>{
  save();render();toast('Tournoi clôturé · Bilan PDF disponible');
 });
 
+// V15 : numéro de la main visible AU PIED de chaque changement de BB sur les deux graphiques PDF.
 // Mini générateur PDF vectoriel WinAnsi : deux pages A4, fonctionnant hors ligne.
 function pdfReport(s,st){
  const W=595.28,H=841.89, BLUE=[0.15,0.42,0.73], NAVY=[0.06,0.12,0.20],MUTED=[0.38,0.44,0.52],GREEN=[0.07,0.55,0.39],RED=[0.77,0.22,0.29],GOLD=[0.78,0.55,0.14];
@@ -1323,11 +1324,29 @@ function pdfReport(s,st){
   for(const word of words){if((row+' '+word).length>maxchars&&row){tx(row,x,yy,size,color,bold);row=word;yy-=13;shown++;if(shown>=2)break;}else row+=(row?' ':'')+word;}
   if(row&&shown<2)tx(row,x,yy,size,color,bold);
  }
- function topTitle(title,desc,page){rect(0,H-109,W,109,NAVY);tx('STACK  /  BILAN DE TOURNOI',36,H-36,12,[0.38,0.89,0.76],true);tx(title,36,H-68,19,[1,1,1],true);tx(desc,36,H-91,9,[0.75,0.82,0.89]);stroke(36,35,W-36,35,[0.83,0.85,0.87]);tx('Généré par STACK  -  Statistiques indicatives',36,21,8,MUTED);tx(`${page} / 2`,W-65,21,8,MUTED)}
+ function topTitle(title,desc,page,placement){
+  rect(0,H-109,W,109,NAVY);
+  tx('STACK  /  BILAN DE TOURNOI',36,H-36,12,[0.38,0.89,0.76],true);
+  // Le titre ne doit jamais recouvrir le classement sur la droite.
+  const shortTitle=placement&&title.length>29?title.slice(0,28)+'…':title;
+  tx(shortTitle,36,H-68,19,[1,1,1],true);
+  tx(desc.length>69?desc.slice(0,68)+'…':desc,36,H-91,9,[0.75,0.82,0.89]);
+  if(placement){
+   rect(W-202,H-96,166,78,[0.12,0.24,0.34]);
+   tx('CLASSEMENT FINAL',W-190,H-42,8,[0.68,0.84,0.90],true);
+   const sz=placement.length>14?13:placement.length>11?16:placement.length>8?21:26;
+   tx(placement,W-190,H-75,sz,[0.45,0.95,0.81],true);
+  }
+  stroke(36,35,W-36,35,[0.83,0.85,0.87]);
+  tx('Généré par STACK  -  Statistiques indicatives',36,21,8,MUTED);
+  tx(`${page} / 2`,W-65,21,8,MUTED);
+ }
  function section(title,y){tx(title,37,y,11,NAVY,true);stroke(37,y-8,W-37,y-8,[0.83,0.87,0.90],.7)}
  function metric(x,y,w,title,value,color=NAVY){rect(x,y-53,w,65,[0.95,0.97,0.98]);tx(title,x+11,y-7,8,MUTED);tx(value,x+11,y-30,15,color,true)}
  function plot(points,x,y,width,height,mode){
-  const left=x+36,bottom=y+31,pw=width-47,ph=height-56;
+  // On réserve une bande sous la courbe pour les numéros des mains (#N).
+  // Les libellés sont sous les traits verticaux, pas au-dessus du graphique.
+  const left=x+36,bottom=y+66,pw=width-47,ph=height-85;
   rect(x,y,width,height,[0.969,0.978,0.986]);
   const vals=points.map(p=>mode==='bb'?p.bb:p.chips);
   const max=vals.reduce((m,v)=>Math.max(m,v),1),f=mode==='bb'?v=>Math.log1p(Math.max(0,v)):v=>Math.max(0,v);
@@ -1338,26 +1357,41 @@ function pdfReport(s,st){
   if(mode==='bb')for(const [v,col] of [[10,RED],[20,GOLD]]){if(v<=max*1.13){const yy=mapY(v);stroke(left,yy,left+pw,yy,col,1,true)}}
   const jump=[];
   for(let i=1;i<points.length;i++)if(points[i].blind!==points[i-1].blind)jump.push(i);
-  for(const idx of jump){stroke(mapX(idx),bottom,mapX(idx),bottom+ph,[0.54,0.69,0.86],.7,true)}
+  const lanes=[-Infinity,-Infinity,-Infinity];
+  for(const idx of jump){
+   const xx=mapX(idx);
+   stroke(xx,bottom,xx,bottom+ph,[0.43,0.62,0.79],.8,true);
+   const label='#'+idx;
+   const labelW=Math.max(20,9+label.length*4.9);
+   const bx=Math.min(left+pw-labelW,Math.max(left,xx-labelW/2));
+   let lane=lanes.findIndex(last=>bx>last+4);
+   if(lane<0) lane=lanes.indexOf(Math.min(...lanes));
+   const by=y+50-lane*13;
+   // Petit trait connecteur : le numéro reste lié au bon changement de BB.
+   stroke(xx,bottom,bx+labelW/2,by+9,[0.43,0.62,0.79],.6);
+   rect(bx,by-2,labelW,12,[0.84,0.91,0.97]);
+   tx(label,bx+3.5,by+1,8,[0.10,0.28,0.46],true);
+   lanes[lane]=bx+labelW;
+  }
   out.push(`${rgb(BLUE)} RG 1.5 w [] 0 d`);
   const step=Math.max(1,Math.ceil(points.length/4000));let first=true;
   for(let i=0;i<points.length;i+=step){out.push(`${num(mapX(i))} ${num(mapY(vals[i]))} ${first?'m':'l'}`);first=false;}
   if((points.length-1)%step!==0)out.push(`${num(mapX(points.length-1))} ${num(mapY(vals[vals.length-1]))} l`);
   out.push('S');
-  for(const idx of [0,Math.round((points.length-1)/2),points.length-1]){tx(String(idx),mapX(idx)-6,y+13,8,MUTED)}
-  tx('Mains',x+width-55,y+13,7,MUTED);
+  for(const idx of [0,Math.round((points.length-1)/2),points.length-1]){tx(String(idx),mapX(idx)-6,y+10,8,MUTED)}
+  tx('Mains',x+width-55,y+10,7,MUTED);
   return jump.length;
  }
  const r=s.result||{};
  const date=new Date(r.endedAt||now()).toLocaleDateString('fr-FR');
  const status={elimine:'Éliminé',vainqueur:'Vainqueur',termine:'Terminé'}[r.status]||'Terminé';
- const place=r.rank?`${r.rank}${r.rank===1?'er':'e'} / ${r.players||'?'}`:(r.players?`? / ${r.players}`:'Non précisée');
- topTitle(s.name.slice(0,47),date+'   |   '+status+'   |   Classement : '+place,1);
+ const place=r.rank?`${r.rank}${r.rank===1?'er':'e'} / ${r.players||'?'}`:(r.status==='vainqueur'?`1er / ${r.players||'?'}`:(r.players?`? / ${r.players}`:'Non précisée'));
+ topTitle(s.name.slice(0,47),date+'   |   '+status,1,r.rank||r.status==='vainqueur'?place:null);
  metric(37,696,167,'Mains distribuées',fmt(st.hands));metric(214,696,167,'Mains jouées',fmt(st.played));
  metric(391,696,167,'Mains jouées (%)',st.percent===null?'—':fmt1(st.percent)+' %',GREEN);
  section('ÉVOLUTION DU STACK EN BB',619);
  plot(st.points,37,345,521,257,'bb');
- tx('Echelle ln(1+BB) - 10 BB (rouge), 20 BB (ocre), nouvelles BB (verticales)',39,336,8,MUTED);
+ tx('Echelle ln(1+BB) - Traits verticaux : #main du changement de BB (sous le trait)',39,336,8,MUTED);
  section('GAINS ET PERTES - MAINS JOUÉES',307);
  metric(37,280,167,'Gain moyen',st.averageGain===null?'—':'+'+fmt1(st.averageGain)+' BB',GREEN);
  metric(214,280,167,'Perte moyenne',st.averageLoss===null?'—':'-'+fmt1(st.averageLoss)+' BB',RED);
@@ -1368,7 +1402,7 @@ function pdfReport(s,st){
  tx('Les folds automatiques et mains sans variation sont exclus des moyennes.',39,137,8,MUTED);
  if(r.note){section('NOTE DE FIN DE TOURNOI',115);lineText(r.note,40,96,95,8,MUTED)}
  // PAGE 2
- out=pages[1];topTitle('ANALYSE DETAILLEE',s.name.slice(0,60)+'   |   '+date,2);
+ out=pages[1];topTitle('ANALYSE DETAILLEE',s.name.slice(0,60)+'   |   '+date,2,r.rank||r.status==='vainqueur'?place:null);
  section('EVOLUTION EN JETONS',705);plot(st.points,37,457,521,233,'chips');
  section('MAINS JOUEES SELON LA PROFONDEUR',427);
  const headings=[39,245,354,454];

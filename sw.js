@@ -1,5 +1,5 @@
 /* Pas de données personnelles dans le cache du service worker. */
-const CACHE_NAME = 'stack-poker-pwa-v13-pdf-bilan-20261030';
+const CACHE_NAME = 'stack-poker-pwa-v15-labels-below-20261030';
 const ASSETS = [
   './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
