@@ -117,6 +117,48 @@ header{margin-bottom:12px}
 #editSelected{margin-top:8px;min-height:37px;padding:6px 12px;font-size:.81rem}
 #editSelected[hidden]{display:none}
 @media(max-width:385px){.editor-grid{gap:7px}.history-item{gap:5px;padding:8px}.history-item .hist-stack{font-size:.69rem}}
+/* V9 : ouvrir les actions uniquement en touchant le numéro de main. */
+.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:680px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+#playedDetail{margin-top:2px}
+.hand-index{display:inline-flex;align-items:center;justify-content:center;align-self:start;min-width:31px;min-height:39px;
+ font-size:.78rem;font-weight:800;color:var(--blue);border:1px solid transparent;background:transparent;border-radius:8px;
+ padding:5px 2px;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px}
+.hand-index[aria-expanded="true"]{background:#233b51;border-color:#416a80;color:#fff}
+.hand-index:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.hand-index-menu{grid-column:1/-1;display:flex;gap:6px;align-items:center;margin:0 0 1px 0;flex-wrap:wrap;
+ padding:7px;border-radius:9px;border:1px solid #34556d;background:#101f30}
+.hand-index-menu[hidden]{display:none!important}
+.hand-index-menu button{flex:1 1 75px;min-height:40px;white-space:nowrap;font-weight:700}
+
+/* Gestion configurable des niveaux de blindes */
+#blindStructureEditor[hidden],#manualBlindBox[hidden],#presetBlindBox[hidden]{display:none!important}
+.blind-structure-input{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;min-height:140px;line-height:1.6;font-size:.98rem}
+.structure-caption{font-size:.78rem;color:var(--sub);line-height:1.45;margin:8px 0 12px}
+.blind-level-nav{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.blind-level-nav button{min-height:48px;white-space:normal}
+.level-current{display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap;margin:0 0 12px}
+.level-badge{background:#183e37;border:1px solid #317f68;border-radius:100px;color:#81f0ce;padding:5px 11px;font-size:.84rem;font-weight:780}
+#levelSummary{font-size:.84rem;color:var(--sub)}
+#structureStatus{line-height:1.4}
+/* V11 : chaque fold dans l'ordre saisi, sans dépendre du nombre de joueurs. */
+.bulk-fold{border-top:1px solid #2e4960;margin-top:13px;padding-top:11px}
+.bulk-fold summary{font-weight:750;font-size:.88rem;color:#c8e6fc;min-height:34px;display:list-item;list-style-position:inside}
+.bulk-fold[open] summary{margin-bottom:11px}
+.bulk-fold-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-width:245px}
+.bulk-fold-grid label{font-size:.78rem;margin-bottom:5px}
+.bulk-fold-grid input{min-height:44px;padding:8px 10px;font-size:1rem}
+.bulk-fold-order{margin-top:12px;background:#0b1a29;border:1px solid #2e4960;border-radius:12px;padding:8px 10px}
+.bulk-order-head{display:grid;grid-template-columns:1fr minmax(140px,2fr);gap:12px;color:#9cb0c3;font-size:.72rem;padding:0 3px 5px}
+.bulk-fold-rows{display:grid;gap:5px}
+.bulk-fold-row{display:grid;grid-template-columns:1fr minmax(140px,2fr);gap:12px;align-items:center}
+.bulk-fold-row:not(:last-child){border-bottom:1px solid #21344a;padding-bottom:5px}
+.bulk-fold-row .bulk-row-name{font-size:.83rem;color:#d2e4ef;font-weight:650;padding-left:3px}
+.bulk-fold-row select{font-size:.86rem;min-height:42px;padding:7px 9px;border-radius:9px}
+.bulk-fold-footer{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-top:10px}
+.bulk-fold-footer #bulkPreview{flex:1 1 140px;line-height:1.4}
+.bulk-fold-footer #bulkFold{min-height:44px;flex:1 1 148px}
+.bulk-hint{font-size:.72rem;margin-top:8px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -140,6 +182,22 @@ header{margin-bottom:12px}
   <button class="action gain full" style="min-height:49px;margin-top:13px" type="submit">Créer ce tournoi</button>
  </form>
  <div class="divider"></div>
+ <div class="panel-head"><h2>Structure des blindes</h2></div>
+ <label for="blindMode">Gestion des niveaux</label>
+ <select id="blindMode">
+  <option value="manual">Manuelle — saisir à chaque changement</option>
+  <option value="preset">Préenregistrée — passer au niveau suivant</option>
+ </select>
+ <div id="blindStructureEditor" hidden>
+  <div class="input-wrap">
+   <label for="levelsText">Niveaux du tournoi (SB / BB / ante)</label>
+   <textarea id="levelsText" class="blind-structure-input" spellcheck="false" rows="6" placeholder="100 / 200 / 200&#10;200 / 400 / 400&#10;300 / 600 / 600"></textarea>
+   <p class="structure-caption">Un niveau par ligne. Ante facultative (0 par défaut). L'avancement se fait avec « Niveau suivant ».</p>
+  </div>
+  <div class="row"><button type="button" class="mini-btn" id="saveLevels">Enregistrer la structure</button><button type="button" class="ghost" id="addCurrentLevel">＋ Niveau actuel</button></div>
+  <p class="small" style="margin-top:10px" id="structureStatus" role="status"></p>
+ </div>
+ <div class="divider"></div>
  <div class="toolbar"><button type="button" class="ghost" id="csv">⇩ CSV</button><button type="button" class="ghost" id="backup">⇩ Sauvegarder</button><button type="button" class="ghost" id="importBtn">⇧ Récupérer mes tournois (JSON)</button><button type="button" class="ghost" id="deleteTournament">Supprimer le tournoi</button></div>
  <input class="sr-only" type="file" id="fileInput" accept=".json,application/json">
 
@@ -150,7 +208,7 @@ header{margin-bottom:12px}
  <div class="stack" aria-live="polite"><span id="stackDisplay">30 000</span> <span class="unit">jetons</span></div>
  <button type="button" class="link-btn" id="quickTournament" style="margin-top:6px" aria-label="Choisir un autre tournoi"><span id="tournamentName">Tournoi du jour</span> ▾</button>
  <div class="startline"><div class="micro" style="margin-top:0">Départ : <b id="startDisplay">30 000</b> jetons</div><button class="link-btn" type="button" id="editStart">✎ Modifier le stack initial</button></div>
- <div class="stats"><div class="stat"><div class="small">Évolution</div><div class="val" id="netDisplay">+0</div></div><div class="stat"><div class="small">Mains suivies</div><div class="val" id="handCount">0</div></div><div class="stat"><div class="small">Blindes</div><div class="val" id="blindsDisplay">100 / 200</div></div></div>
+ <div class="stats"><div class="stat"><div class="small">Évolution</div><div class="val" id="netDisplay">+0</div></div><div class="stat"><div class="small">Mains suivies</div><div class="val" id="handCount">0</div></div><div class="stat"><div class="small" title="Mains avec une variation positive ou négative, hors Fold rapide et mains à 0. Estimation basée sur les mains enregistrées.">Mains jouées ≈</div><div class="val" id="playedPercent">—</div><div class="small" id="playedDetail">0 / 0</div></div><div class="stat"><div class="small">Blindes</div><div class="val" id="blindsDisplay">100 / 200</div></div></div>
 </section>
 <section class="panel" aria-labelledby="actionTitle">
  <div class="panel-head"><h2 id="actionTitle">Enregistrer une main</h2><button type="button" class="ghost" style="padding:8px 11px" id="undo">↶ Annuler</button></div>
@@ -164,15 +222,36 @@ header{margin-bottom:12px}
  <button type="button" id="skip" class="skip">Main sans variation (0 jeton)</button>
  <div class="required-box"><h3>⚡ Fold rapide</h3>
   <div class="position-select"><label for="position">Ma position sur cette main<select id="position"><option value="other">Hors blindes</option><option value="sb">Petite blinde (SB)</option><option value="bb">Grosse blinde (BB)</option></select></label><button type="button" id="fold" class="muted-btn" style="align-self:end;flex:1 1 150px">Fold : <span id="foldCost">−0</span></button></div>
+  <details id="bulkFoldDetails" class="bulk-fold">
+   <summary>Fold × plusieurs mains</summary>
+   <div class="bulk-fold-grid">
+    <div><label for="bulkCount">Nombre de folds consécutifs</label><input id="bulkCount" type="number" min="2" max="40" step="1" inputmode="numeric" value="5"></div>
+   </div>
+   <div class="bulk-fold-order" role="group" aria-label="Folds dans l’ordre du jeu">
+    <div class="bulk-order-head"><span>Main</span><span>Position (facultatif)</span></div>
+    <div id="bulkHandRows" class="bulk-fold-rows"></div>
+   </div>
+   <div class="bulk-fold-footer"><span id="bulkPreview" class="small" role="status" aria-live="polite">Calcul des blindes…</span><button type="button" id="bulkFold" class="muted-btn">Enregistrer les folds</button></div>
+   <p class="small bulk-hint">De la première à la dernière main. Toutes les mains apparaîtront séparément dans le graphique. Sélectionne SB ou BB uniquement sur les mains concernées. Ante individuelle appliquée à chaque fold, si activée.</p>
+  </details>
 
  </div>
 </section>
 <section class="panel" aria-labelledby="blindsTitle">
  <div class="panel-head"><h2 id="blindsTitle">Niveau de blindes</h2></div>
+ <div id="manualBlindBox">
  <div class="columns"><div><label for="sbInput">Petite blinde (SB)</label><input id="sbInput" type="number" min="0" step="1" inputmode="numeric" value="100"></div><div><label for="bbInput">Grosse blinde (BB)</label><input id="bbInput" type="number" min="1" step="1" inputmode="numeric" value="200"></div></div>
  <div class="columns" style="margin-top:12px"><div><label for="anteInput">Ante (jetons)</label><input id="anteInput" type="number" min="0" step="1" inputmode="numeric" value="200"></div><div><label for="anteMode">Type d'ante</label><select id="anteMode"><option value="bba">Big Blind Ante</option><option value="each">Ante individuelle</option></select></div></div>
  <button type="button" id="updateBlinds" class="mini-btn full" style="margin-top:13px">Mettre à jour le niveau</button>
-
+ </div>
+ <div id="presetBlindBox" hidden>
+  <div class="level-current"><span id="currentLevelBadge" class="level-badge">Niveau non défini</span><span id="levelSummary">Configure les niveaux dans Réglages.</span></div>
+  <label for="levelPicker">Choisir un niveau</label><select id="levelPicker" aria-label="Niveau de blindes à appliquer"></select>
+  <button type="button" id="applyLevel" class="mini-btn full" style="margin-top:10px">Appliquer le niveau sélectionné</button>
+  <div class="blind-level-nav"><button type="button" id="previousLevel" class="muted-btn">◀ Niveau précédent</button><button type="button" id="nextLevel" class="muted-btn">Niveau suivant ▶</button></div>
+  <div class="row" style="margin-top:10px"><label for="presetAnteMode" style="margin:0;min-width:125px">Type d'ante</label><select id="presetAnteMode" style="flex:1"><option value="bba">Big Blind Ante</option><option value="each">Ante individuelle</option></select></div>
+  <button type="button" id="editBlindStructure" class="link-btn" style="margin-top:12px">⚙ Modifier la structure</button>
+ </div>
 </section>
 <section class="panel" aria-labelledby="chartTitle">
  <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><div class="row" style="gap:7px"><span class="small" id="rangeLabel">Depuis le départ</span><button class="ghost" type="button" id="shareToggle" aria-expanded="false" aria-controls="sharePanel">↗ Partager</button></div></div>
@@ -206,7 +285,7 @@ header{margin-bottom:12px}
 </section>
 <section class="panel" aria-labelledby="historyTitle">
  <div class="panel-head"><h2 id="historyTitle">Historique des mains</h2><span class="small" id="countLabel">0 main</span></div>
- <button class="mini-btn full" type="button" id="addMissingHand">＋ Insérer une main oubliée</button>
+ <button class="mini-btn full" type="button" id="addMissingHand">＋ Ajouter la première main</button>
  <section id="handEditor" class="panel" hidden aria-label="Modifier ou insérer une main">
   <div class="panel-head"><h2 id="editorTitle">Modifier une main</h2><button class="ghost" type="button" id="closeEditor" aria-label="Fermer le formulaire">✕</button></div>
   <p id="editorSummary" class="editor-summary"></p>
@@ -237,8 +316,12 @@ header{margin-bottom:12px}
 const KEY='poker-stack-suivi-v2'; const GRAPH_KEY='poker-stack-graph-mode-v3'; const $=id=>document.getElementById(id);const nf=new Intl.NumberFormat('fr-FR');
 const fmt=n=>nf.format(n);const now=()=>new Date().toISOString();const uid=()=>('p'+Date.now()+Math.random().toString(36).slice(2));
 const cleanInt=x=>Number.isSafeInteger(Number(x))?Number(x):NaN;let localOK=true;
-function sample(){const s={id:uid(),name:'Tournoi du jour',startStack:30000,sb:100,bb:200,initialBB:200,ante:200,anteMode:'bba',createdAt:now(),hands:[]};return {sessions:[s],activeId:s.id}}
-function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.sessions.length>200)throw Error('Fichier invalide');for(const s of d.sessions){if(typeof s.id!=='string'||typeof s.name!=='string'||!Number.isSafeInteger(s.startStack)||s.startStack<=0||!Number.isSafeInteger(s.bb)||s.bb<=0||!Array.isArray(s.hands)||s.hands.length>200000)throw Error('Tournoi invalide');if(!Number.isSafeInteger(s.initialBB)||s.initialBB<=0)s.initialBB=(s.hands.length&&Number.isSafeInteger(s.hands[0].bb)&&s.hands[0].bb>0)?s.hands[0].bb:s.bb;if(s.ante===undefined)s.ante=0;if(s.anteMode===undefined)s.anteMode='bba';if(!Number.isSafeInteger(s.ante)||s.ante<0||!['bba','each'].includes(s.anteMode))throw Error('Ante invalide');if(!Number.isSafeInteger(s.sb)||s.sb<0||s.sb>s.bb)throw Error('Petite blinde invalide');let stack=s.startStack;for(const h of s.hands){if(!Number.isSafeInteger(h.delta)||typeof h.id!=='string')throw Error('Historique invalide');if(h.note===undefined)h.note='';if(typeof h.note!=='string'||h.note.length>2000)throw Error('Note invalide');stack+=h.delta;if(!Number.isSafeInteger(stack)||stack<0)throw Error('Stack négatif dans la sauvegarde')}}if(!d.sessions.some(s=>s.id===d.activeId))d.activeId=d.sessions[0].id;return d}
+function sample(){const s={id:uid(),name:'Tournoi du jour',startStack:30000,sb:100,bb:200,initialBB:200,ante:200,anteMode:'bba',blindMode:'manual',blindLevels:[],levelIndex:-1,tableSize:10,createdAt:now(),hands:[]};return {sessions:[s],activeId:s.id}}
+function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.sessions.length>200)throw Error('Fichier invalide');for(const s of d.sessions){if(typeof s.id!=='string'||typeof s.name!=='string'||!Number.isSafeInteger(s.startStack)||s.startStack<=0||!Number.isSafeInteger(s.bb)||s.bb<=0||!Array.isArray(s.hands)||s.hands.length>200000)throw Error('Tournoi invalide');if(s.blindMode!=='preset')s.blindMode='manual';if(!Number.isSafeInteger(s.tableSize)||s.tableSize<2||s.tableSize>10)s.tableSize=10;
+if(!Array.isArray(s.blindLevels))s.blindLevels=[];
+s.blindLevels=s.blindLevels.filter(l=>l&&Number.isSafeInteger(l.sb)&&l.sb>=0&&Number.isSafeInteger(l.bb)&&l.bb>0&&l.sb<=l.bb&&Number.isSafeInteger(l.ante)&&l.ante>=0).slice(0,120).map(l=>({sb:l.sb,bb:l.bb,ante:l.ante}));
+if(!Number.isSafeInteger(s.levelIndex)||s.levelIndex<0||s.levelIndex>=s.blindLevels.length)s.levelIndex=-1;
+if(!Number.isSafeInteger(s.initialBB)||s.initialBB<=0)s.initialBB=(s.hands.length&&Number.isSafeInteger(s.hands[0].bb)&&s.hands[0].bb>0)?s.hands[0].bb:s.bb;if(s.ante===undefined)s.ante=0;if(s.anteMode===undefined)s.anteMode='bba';if(!Number.isSafeInteger(s.ante)||s.ante<0||!['bba','each'].includes(s.anteMode))throw Error('Ante invalide');if(!Number.isSafeInteger(s.sb)||s.sb<0||s.sb>s.bb)throw Error('Petite blinde invalide');let stack=s.startStack;for(const h of s.hands){if(!Number.isSafeInteger(h.delta)||typeof h.id!=='string')throw Error('Historique invalide');if(h.note===undefined)h.note='';if(typeof h.note!=='string'||h.note.length>2000)throw Error('Note invalide');stack+=h.delta;if(!Number.isSafeInteger(stack)||stack<0)throw Error('Stack négatif dans la sauvegarde')}}if(!d.sessions.some(s=>s.id===d.activeId))d.activeId=d.sessions[0].id;return d}
 let graphMode='chips';try{graphMode=localStorage.getItem(GRAPH_KEY)==='bb'?'bb':'chips'}catch(e){}
 let data;try{const saved=localStorage.getItem(KEY);data=saved?validate(JSON.parse(saved)):sample()}catch(e){data=sample();localOK=false}if(!localOK)$('storageWarning').style.display='block';
 function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localOK=true;$('storageWarning').style.display='none'}catch(e){localOK=false;$('storageWarning').style.display='block'}}
@@ -249,18 +332,189 @@ function pushHand(delta,kind='manual',position=''){ const s=current(), t=total(s
 function handleAmount(sign){const amt=cleanInt($('amount').value);if(!Number.isSafeInteger(amt)||amt<=0){$('amount').focus();toast('Entre un montant positif en jetons');return}pushHand(sign*amt)}
 $('win').addEventListener('click',()=>handleAmount(1));$('lose').addEventListener('click',()=>handleAmount(-1));$('skip').addEventListener('click',()=>pushHand(0,'skip'));
 $('amount').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleAmount(1)}});
-$('undo').addEventListener('click',()=>{const s=current();if(!s.hands.length)return;s.hands.pop();save();render();toast('Dernière main annulée')});
+$('undo').addEventListener('click',()=>{
+ const s=current();if(!s.hands.length)return;
+ const last=s.hands[s.hands.length-1];const group=last.bulkGroup;
+ let removed=0;
+ do{s.hands.pop();removed++}while(group&&s.hands.length&&s.hands[s.hands.length-1].bulkGroup===group);
+ save();render();toast(removed>1?`${removed} folds annulés`:'Dernière main annulée');
+});
 function blindCost(s,pos){return (pos==='sb'?s.sb:pos==='bb'?s.bb:0)+(s.anteMode==='each'||(s.anteMode==='bba'&&pos==='bb')?s.ante:0)}
 function updateFoldLabel(){const s=current();const cost=blindCost(s,$('position').value);$('foldCost').textContent='−'+fmt(cost)}
 $('position').addEventListener('change',updateFoldLabel);
 $('fold').addEventListener('click',()=>{const p=$('position').value,amt=blindCost(current(),p);pushHand(-amt,'fold',p)});
-$('updateBlinds').addEventListener('click',()=>{const sb=cleanInt($('sbInput').value),bb=cleanInt($('bbInput').value),ante=cleanInt($('anteInput').value),anteMode=$('anteMode').value;if(!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Vérifie les blindes et antes');return}const s=current();s.sb=sb;s.bb=bb;s.ante=ante;s.anteMode=anteMode;save();render();toast('Blindes et antes mises à jour')});
+// On choisit les SB et BB exactement à leur place dans la série, même à table variable.
+// Chaque fold est une vraie entrée indépendante dans hands et donc un point du graphique.
+let bulkSessionId=null;
+function drawBulkOrderRows(){
+ const container=$('bulkHandRows');
+ const previous=[...container.querySelectorAll('select.bulk-seat')].map(select=>select.value);
+ const count=Number($('bulkCount').value);
+ container.replaceChildren();
+ if(!Number.isSafeInteger(count)||count<2||count>40){
+   $('bulkPreview').textContent='Choisis entre 2 et 40 folds.';
+   $('bulkFold').disabled=true;return;
+ }
+ const fragment=document.createDocumentFragment();
+ for(let i=0;i<count;i++){
+  const row=document.createElement('div');row.className='bulk-fold-row';
+  const name=document.createElement('span');name.className='bulk-row-name';name.textContent=`#${current().hands.length+i+1}`;
+  const select=document.createElement('select');select.className='bulk-seat';
+  select.setAttribute('aria-label',`Position du fold ${i+1} sur ${count}`);
+  for(const [value,label] of [['other','Fold'],['sb','SB · Fold'],['bb','BB · Fold']]){
+    const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);
+  }
+  select.value=previous[i]||'other';
+  select.addEventListener('change',updateBulkPreview);
+  row.append(name,select);fragment.appendChild(row);
+ }
+ container.appendChild(fragment);updateBulkPreview();
+}
+function syncBulkSetup(){
+ const s=current();
+ if(bulkSessionId!==s.id){
+  bulkSessionId=s.id;
+  // Ne jamais réutiliser les blindes d'une série préparée pour un autre tournoi.
+  $('bulkHandRows').replaceChildren();
+ }
+ const count=Number($('bulkCount').value);
+ const rows=$('bulkHandRows').querySelectorAll('select.bulk-seat');
+ if(Number.isSafeInteger(count)&&count>=2&&count<=40&&rows.length===count){
+  [...$('bulkHandRows').querySelectorAll('.bulk-row-name')].forEach((label,i)=>label.textContent=`#${s.hands.length+i+1}`);
+  updateBulkPreview();
+ }else drawBulkOrderRows();
+}
+function bulkFoldPlan(){
+ const count=Number($('bulkCount').value);
+ const rows=[...$('bulkHandRows').querySelectorAll('select.bulk-seat')];
+ if(!Number.isSafeInteger(count)||count<2||count>40||rows.length!==count)return null;
+ const s=current();
+ return rows.map(select=>{
+  const position=select.value;
+  if(!['other','sb','bb'].includes(position))return null;
+  return {position,delta:-blindCost(s,position)};
+ });
+}
+function updateBulkPreview(){
+ const plan=bulkFoldPlan(),label=$('bulkPreview');
+ if(!plan||plan.includes(null)){
+  label.textContent='Entre 2 et 40 folds, dans l’ordre du jeu.';
+  $('bulkFold').disabled=true;return;
+ }
+ const cost=-plan.reduce((sum,h)=>sum+h.delta,0);
+ const sb=plan.filter(h=>h.position==='sb').length;
+ const bb=plan.filter(h=>h.position==='bb').length;
+ label.textContent=`${plan.length} mains individuelles · ${sb} SB · ${bb} BB · −${fmt(cost)} jetons`;
+ $('bulkFold').disabled=cost>total(current());
+ if(cost>total(current()))label.textContent+=' · stack insuffisant';
+}
+$('bulkCount').addEventListener('input',drawBulkOrderRows);
+$('bulkFold').addEventListener('click',()=>{
+ const plan=bulkFoldPlan();if(!plan||plan.includes(null)){toast('Vérifie la série de folds');return}
+ const s=current(),cost=-plan.reduce((sum,h)=>sum+h.delta,0),stack=total(s);
+ if(cost>stack){toast('Folds impossibles : mises obligatoires supérieures au stack');return}
+ if(s.hands.length+plan.length>200000){toast('Limite de mains atteinte');return}
+ const group=uid(),timestamp=Date.now();
+ const entries=plan.map(({delta,position},i)=>({id:uid(),delta,bb:s.bb,sb:s.sb,ante:s.ante,
+  anteMode:s.anteMode,kind:'fold',position,bulkGroup:group,note:'',
+  createdAt:new Date(timestamp).toISOString()}));
+ s.hands.push(...entries);
+ // Prête pour un prochain enregistrement ; pas de positions inférées automatiquement.
+ $('bulkHandRows').replaceChildren();
+ save();render();toast(`${entries.length} folds distincts enregistrés · −${fmt(cost)} jetons`);
+});
+
+$('updateBlinds').addEventListener('click',()=>{const sb=cleanInt($('sbInput').value),bb=cleanInt($('bbInput').value),ante=cleanInt($('anteInput').value),anteMode=$('anteMode').value;if(!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Vérifie les blindes et antes');return}const s=current();s.sb=sb;s.bb=bb;s.ante=ante;s.anteMode=anteMode;s.levelIndex=-1;save();render();toast('Blindes et antes mises à jour')});
+// Les structures de blindes appartiennent à chaque tournoi ; les anciens historiques restent intacts.
+let settingsBlindSessionId=null;
+const formatLevel=(l,i)=>`${i+1}. ${fmt(l.sb)} / ${fmt(l.bb)} / ${fmt(l.ante)}`;
+function levelEditorContent(levels){return levels.map(l=>`${l.sb} / ${l.bb} / ${l.ante}`).join('\n')}
+function configureBlindInterface(forceEditor=false){
+ const s=current(), preset=s.blindMode==='preset';
+ $('blindMode').value=s.blindMode;
+ $('blindStructureEditor').hidden=!preset;
+ $('manualBlindBox').hidden=preset;
+ $('presetBlindBox').hidden=!preset;
+ if(forceEditor||settingsBlindSessionId!==s.id){
+   $('levelsText').value=levelEditorContent(s.blindLevels);
+   settingsBlindSessionId=s.id;
+ }
+ $('structureStatus').textContent=s.blindLevels.length
+  ?`${s.blindLevels.length} niveau${s.blindLevels.length>1?'x':''} enregistré${s.blindLevels.length>1?'s':''} pour ce tournoi.`
+  :'Aucun niveau enregistré.';
+ const pick=$('levelPicker');
+ const selectedBefore=pick.value;
+ pick.replaceChildren();
+ for(const [i,l] of s.blindLevels.entries()){
+   const o=document.createElement('option');o.value=String(i);o.textContent=formatLevel(l,i);pick.appendChild(o);
+ }
+ if(s.levelIndex>=0)pick.value=String(s.levelIndex);
+ else if(s.blindLevels.length){pick.value=selectedBefore!=='' && Number(selectedBefore)<s.blindLevels.length?selectedBefore:'0'}
+ const configured=s.blindLevels.length>0,assigned=s.levelIndex>=0;
+ $('currentLevelBadge').textContent=assigned?`Niveau ${s.levelIndex+1} / ${s.blindLevels.length}`:'Niveau à choisir';
+ $('levelSummary').textContent=configured?`${fmt(s.sb)} / ${fmt(s.bb)} / ${fmt(s.ante)} ante`:'Ajoute les niveaux dans Réglages.';
+ $('applyLevel').disabled=!configured;
+ $('previousLevel').disabled=!configured||!assigned||s.levelIndex===0;
+ $('nextLevel').disabled=!configured||(assigned&&s.levelIndex===s.blindLevels.length-1);
+ $('presetAnteMode').value=s.anteMode;
+}
+function parseLevels(text){
+ const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ if(!lines.length)throw Error('Ajoute au moins un niveau');
+ if(lines.length>120)throw Error('Maximum 120 niveaux');
+ return lines.map((line,i)=>{
+   const parts=line.split(/[\s;,/|]+/).filter(Boolean);
+   if(parts.length<2||parts.length>3||parts.some(x=>!/^\d+$/.test(x)))throw Error(`Ligne ${i+1} : utilise SB / BB / ante`);
+   const sb=Number(parts[0]),bb=Number(parts[1]),ante=parts.length===3?Number(parts[2]):0;
+   if(![sb,bb,ante].every(Number.isSafeInteger)||sb<0||bb<=0||sb>bb||ante<0)throw Error(`Ligne ${i+1} : blindes ou ante invalides`);
+   return {sb,bb,ante};
+ });
+}
+function activateLevel(i){
+ const s=current(),l=s.blindLevels[i];
+ if(!l){toast('Niveau introuvable');return}
+ s.levelIndex=i;s.sb=l.sb;s.bb=l.bb;s.ante=l.ante;
+ save();render();toast(`Niveau ${i+1} appliqué : ${fmt(l.sb)} / ${fmt(l.bb)} / ${fmt(l.ante)}`);
+}
+$('blindMode').addEventListener('change',()=>{
+ const s=current();s.blindMode=$('blindMode').value==='preset'?'preset':'manual';
+ save();configureBlindInterface(true);render();
+ toast(s.blindMode==='preset'?'Structure préenregistrée sélectionnée':'Saisie manuelle sélectionnée');
+});
+$('addCurrentLevel').addEventListener('click',()=>{
+ const s=current(),text=$('levelsText');
+ text.value+=(text.value.trim()?'\n':'')+`${s.sb} / ${s.bb} / ${s.ante}`;
+ text.focus();text.setSelectionRange(text.value.length,text.value.length);
+});
+$('saveLevels').addEventListener('click',()=>{
+ const s=current();let levels;
+ try{levels=parseLevels($('levelsText').value)}catch(err){toast(err.message);return}
+ const matched=levels.findIndex(l=>l.sb===s.sb&&l.bb===s.bb&&l.ante===s.ante);
+ s.blindLevels=levels;
+ // Conserve les blindes actuelles, et retrouve leur numéro dans la structure si possible.
+ s.levelIndex=matched;
+ s.blindMode='preset';
+ save();configureBlindInterface(true);render();
+ toast(matched>=0?`${levels.length} niveaux enregistrés · niveau ${matched+1} actif`:`${levels.length} niveaux enregistrés · choisis le niveau actuel`);
+});
+$('applyLevel').addEventListener('click',()=>activateLevel(cleanInt($('levelPicker').value)));
+$('nextLevel').addEventListener('click',()=>activateLevel(current().levelIndex+1));
+$('previousLevel').addEventListener('click',()=>activateLevel(current().levelIndex-1));
+$('presetAnteMode').addEventListener('change',()=>{
+ const s=current();s.anteMode=$('presetAnteMode').value;
+ save();render();toast('Type d’ante modifié');
+});
+$('editBlindStructure').addEventListener('click',()=>{
+ $('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');
+ $('blindStructureEditor').scrollIntoView({behavior:'smooth',block:'center'});
+ $('levelsText').focus({preventScroll:true});
+});
 $('startForm').addEventListener('submit',e=>{e.preventDefault();const s=current(),v=cleanInt($('editStartStack').value);if(!Number.isSafeInteger(v)||v<=0){toast('Stack initial invalide');return}let running=v;for(const h of s.hands){running+=h.delta;if(!Number.isSafeInteger(running)||running<0){toast('Cette valeur rendrait un stack passé négatif');return}}s.startStack=v;save();render();toast('Stack de départ modifié')});
 $('editStart').addEventListener('click',()=>{$('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');$('startForm').scrollIntoView({behavior:'smooth',block:'center'});$('editStartStack').focus({preventScroll:true})});
 $('toggleSettings').addEventListener('click',()=>{const show=$('settingsPanel').classList.toggle('show');$('toggleSettings').setAttribute('aria-expanded',show)});
 $('quickTournament').addEventListener('click',()=>{$('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');$('sessions').scrollIntoView({behavior:'smooth',block:'center'});$('sessions').focus({preventScroll:true})});
 $('toggleNew').addEventListener('click',()=>{$('newForm').classList.toggle('show')});
-$('newForm').addEventListener('submit',e=>{e.preventDefault();const stack=cleanInt($('newStack').value),sb=cleanInt($('newSB').value),bb=cleanInt($('newBB').value),ante=cleanInt($('newAnte').value),anteMode=$('newAnteMode').value,name=$('newName').value.trim();if(!name||!Number.isSafeInteger(stack)||stack<=0||!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Paramètres invalides');return}const s={id:uid(),name,startStack:stack,sb,bb,initialBB:bb,ante,anteMode,createdAt:now(),hands:[]};data.sessions.push(s);data.activeId=s.id;save();$('newForm').classList.remove('show');$('settingsPanel').classList.remove('show');$('toggleSettings').setAttribute('aria-expanded','false');render();toast('Nouveau tournoi créé')});
+$('newForm').addEventListener('submit',e=>{e.preventDefault();const stack=cleanInt($('newStack').value),sb=cleanInt($('newSB').value),bb=cleanInt($('newBB').value),ante=cleanInt($('newAnte').value),anteMode=$('newAnteMode').value,name=$('newName').value.trim();if(!name||!Number.isSafeInteger(stack)||stack<=0||!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Paramètres invalides');return}const s={id:uid(),name,startStack:stack,sb,bb,initialBB:bb,ante,anteMode,blindMode:'manual',blindLevels:[],levelIndex:-1,tableSize:10,createdAt:now(),hands:[]};data.sessions.push(s);data.activeId=s.id;save();$('newForm').classList.remove('show');$('settingsPanel').classList.remove('show');$('toggleSettings').setAttribute('aria-expanded','false');render();toast('Nouveau tournoi créé')});
 $('sessions').addEventListener('change',e=>{closeHandEditor();data.activeId=e.target.value;save();render()});
 $('deleteTournament').addEventListener('click',()=>{if(!confirm('Supprimer ce tournoi et son historique ? Exporte une sauvegarde avant si nécessaire.'))return;closeHandEditor();const s=current();data.sessions=data.sessions.filter(x=>x.id!==s.id);if(!data.sessions.length){const d=sample();data.sessions=d.sessions}data.activeId=data.sessions[0].id;save();render();toast('Tournoi supprimé')});
 function download(content,type,filename){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}
@@ -297,6 +551,14 @@ $('fileInput').addEventListener('change',async e=>{
 let editingHand=null; // {mode: 'edit'|'insert', sessionId, index}
 let suppressAutoFollowOnce=false;
 let historyLimit=30;let historySessionId=null;
+function closeHandIndexMenus(){
+ document.querySelectorAll('.hand-index-menu:not([hidden])').forEach(m=>{m.hidden=true});
+ document.querySelectorAll('.hand-index[aria-expanded="true"]').forEach(b=>b.setAttribute('aria-expanded','false'));
+}
+// Estimate deliberately follows the simple requested rule: positive/negative recorded
+// changes count; explicit blind-only folds and zero-change hands do not.
+function playedHands(s){return s.hands.filter(h=>h.kind!=='fold' && h.kind!=='skip' && h.delta!==0).length}
+
 function timelineIssue(stackStart,hands){
  let stack=stackStart;
  for(let i=0;i<hands.length;i++){
@@ -376,7 +638,7 @@ $('handEditForm').addEventListener('submit',event=>{
  toast(e.mode==='edit'?'Main corrigée · graphique recalculé':'Main insérée · graphique recalculé');
 });
 $('olderHands').addEventListener('click',()=>{historyLimit+=30;render()});
-function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;updateFoldLabel();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
+function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);const played=playedHands(s);$('playedPercent').textContent=s.hands.length?(100*played/s.hands.length).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';$('playedDetail').textContent=fmt(played)+' / '+fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;configureBlindInterface();updateFoldLabel();syncBulkSetup();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
 const sel=$('sessions');if(sel.options.length!==data.sessions.length||[...sel.options].some((o,i)=>o.value!==data.sessions[i].id)){sel.replaceChildren();for(const session of data.sessions){const opt=document.createElement('option');opt.value=session.id;opt.textContent=session.name;sel.appendChild(opt)}}sel.value=s.id;
 const hist=$('history');hist.replaceChildren();
 if(historySessionId!==s.id){historySessionId=s.id;historyLimit=30}
@@ -386,7 +648,10 @@ if(!s.hands.length){
  let cumulative=t;
  for(let idx=s.hands.length-1;idx>=Math.max(0,s.hands.length-historyLimit);idx--){
   const h=s.hands[idx],item=document.createElement('div');item.className='history-item';
-  const index=document.createElement('span');index.className='index';index.textContent='#'+(idx+1);
+  const index=document.createElement('button');index.type='button';index.className='index hand-index';index.textContent='#'+(idx+1);
+  index.title='Modifier ou insérer une main';
+  index.setAttribute('aria-label',`Options de la main ${idx+1}`);
+  index.setAttribute('aria-expanded','false');
   const detail=document.createElement('div');
   const val=document.createElement('div');val.className='hist-delta '+(h.delta>0?'pos':h.delta<0?'neg':'info');val.textContent=(h.delta>0?'+':'')+fmt(h.delta)+' jetons'+(h.kind==='fold'?' · fold':'');
   const sub=document.createElement('div');sub.className='hist-sub';
@@ -394,10 +659,22 @@ if(!s.hands.length){
   sub.textContent=time+' · BB '+fmt(h.bb)+(h.kind==='fold'?' · '+({other:'hors blindes',sb:'SB',bb:'BB'}[h.position]||''): '');
   detail.append(val,sub);
   if(h.note){const note=document.createElement('div');note.className='hist-note';note.textContent='📝 '+h.note;detail.appendChild(note)}
-  const controls=document.createElement('div');controls.className='hist-actions';
-  const edit=document.createElement('button');edit.type='button';edit.textContent='✎ Modifier';edit.setAttribute('aria-label',`Modifier la main ${idx+1}`);edit.addEventListener('click',()=>openHandEditor('edit',idx));
-  const insert=document.createElement('button');insert.type='button';insert.textContent='＋ Avant';insert.setAttribute('aria-label',`Insérer une main avant la main ${idx+1}`);insert.addEventListener('click',()=>openHandEditor('insert',idx));
-  controls.append(edit,insert);detail.appendChild(controls);
+  const controls=document.createElement('div');controls.className='hist-actions hand-index-menu';
+  controls.hidden=true;
+  controls.id=`hand-options-${idx+1}`;
+  index.setAttribute('aria-controls',controls.id);
+  const addAction=(title,aria,fn)=>{
+   const b=document.createElement('button');b.type='button';b.textContent=title;
+   b.setAttribute('aria-label',aria);b.addEventListener('click',()=>{closeHandIndexMenus();fn()});
+   controls.appendChild(b);
+  };
+  addAction('✎ Modifier',`Modifier la main ${idx+1}`,()=>openHandEditor('edit',idx));
+  addAction('＋ Avant',`Insérer une main avant la main ${idx+1}`,()=>openHandEditor('insert',idx));
+  addAction('＋ Après',`Insérer une main après la main ${idx+1}`,()=>openHandEditor('insert',idx+1));
+  index.addEventListener('click',()=>{
+   const opening=controls.hidden;closeHandIndexMenus();
+   controls.hidden=!opening;index.setAttribute('aria-expanded',String(opening));
+  });
   const side=document.createElement('div');side.style.textAlign='right';
   const stack=document.createElement('div');stack.className='hist-stack small';stack.textContent=fmt(cumulative);
   const del=document.createElement('button');del.className='delete';del.type='button';del.textContent='✕';del.title='Supprimer cette main';del.setAttribute('aria-label',`Supprimer la main ${idx+1}`);
@@ -408,11 +685,11 @@ if(!s.hands.length){
    if(issue!==null){toast(`Suppression impossible : stack négatif à la main ${issue}`);return}
    s.hands=next;closeHandEditor();save();render();toast('Main supprimée · stack recalculé');
   });
-  side.append(stack,del);item.append(index,detail,side);hist.append(item);cumulative-=h.delta;
+  side.append(stack,del);item.append(index,detail,side,controls);hist.append(item);cumulative-=h.delta;
  }
 }
 const left=Math.max(0,s.hands.length-historyLimit);
-$('olderHands').hidden=left===0;
+$('addMissingHand').hidden=s.hands.length>0;$('olderHands').hidden=left===0;
 $('olderHands').textContent=`Afficher les ${Math.min(30,left)} mains précédentes`;
 drawChart()}
 // État de visualisation (la sauvegarde du tournoi et des notes reste 100 % compatible V4).
