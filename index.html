@@ -295,7 +295,7 @@ header{margin-bottom:12px}
 <section class="panel" aria-labelledby="chartTitle">
  <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><div class="row" style="gap:7px"><span class="small" id="rangeLabel">Depuis le départ</span><button class="ghost" type="button" id="shareToggle" aria-expanded="false" aria-controls="sharePanel">↗ Partager</button></div></div>
  <div class="chart-controls"><div class="chart-switch" role="group" aria-label="Unité du graphique"><button type="button" id="graphChips" aria-pressed="true">Jetons</button><button type="button" id="graphBB" aria-pressed="false">BB</button></div></div>
- <div class="chart-subcontrols"><div class="scale-switch" id="bbScaleGroup" role="group" aria-label="Échelle du graphique en BB" hidden><button type="button" id="scaleLinear" aria-pressed="false">Linéaire</button><button type="button" id="scaleLog" aria-pressed="true">Logarithmique</button></div>
+ <div class="chart-subcontrols"><div class="scale-switch" id="bbScaleGroup" role="group" aria-label="Échelle du graphique en BB" hidden><button type="button" id="scaleLinear" aria-pressed="false">Linéaire</button><button type="button" id="scaleLog" aria-pressed="true">Paliers BB</button></div>
   <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
  </div>
  <div class="chartbox"><canvas id="chart" tabindex="0" role="img" aria-label="Graphique interactif. Toucher une position pour sélectionner une main. Flèches du clavier : main précédente ou suivante."></canvas></div>
@@ -770,25 +770,38 @@ $('graphChips').addEventListener('click',()=>setGraphMode('chips'));
 $('graphBB').addEventListener('click',()=>setGraphMode('bb'));
 $('scaleLinear').addEventListener('click',()=>setBBScale('linear'));
 $('scaleLog').addEventListener('click',()=>setBBScale('log'));
-// Repères naturels en BB. Même calcul pour la courbe interactive et l'image partagée.
-function bbTickValues(low,high,logarithmic,pixels){
- const tx=v=>logarithmic?Math.log1p(Math.max(0,v)):v;
- const itx=v=>logarithmic?Math.expm1(v):v;
+// Échelle poker à paliers égaux :
+// 0-5 BB, 5-10 BB, 10-20 BB, 20-40 BB, 40-80 BB, etc.
+// Chaque intervalle occupe EXACTEMENT la même hauteur verticale.
+// Le mode interne "log" est conservé pour retrouver le réglage des anciennes versions.
+function bbPokerMap(value){
+ const v=Math.max(0,Number(value)||0);
+ if(v<=5)return v/5;
+ if(v<=10)return 1+(v-5)/5;
+ return 2+Math.log2(v/10);
+}
+function bbPokerUnmap(position){
+ const z=Math.max(0,Number(position)||0);
+ if(z<=1)return 5*z;
+ if(z<=2)return 5+5*(z-1);
+ return 10*Math.pow(2,z-2);
+}
+// Mêmes graduations pour le graphique, les images partagées et les PDF.
+function bbTickValues(low,high,poker,pixels){
+ const tx=v=>poker?bbPokerMap(v):v;
+ const itx=v=>poker?bbPokerUnmap(v):v;
  const maxVal=itx(high);
- const values=[0,.25,.5,1,2,5,10,20,40,80,160];
- let value=160;
- while(value<maxVal*1.1&&value<1000000000){value*=2;values.push(value)}
- const candidates=values.filter(v=>tx(v)>=low-1e-8&&tx(v)<=high+1e-8);
- if(candidates.length<2){
-  // Fenêtre très zoomée en BB : compléter par des valeurs intermédiaires lisibles.
-  return Array.from({length:5},(_,i)=>Math.max(0,itx(low+(high-low)*i/4)));
- }
- const ordered=[10,20,5,40,1,80,160,2,0,.5,.25,...values.filter(v=>v>160)];
+ const levels=[0,5,10];
+ for(let value=20;value<=Math.max(40,maxVal*1.1)&&value<1e10;value*=2)levels.push(value);
+ // Les graduations intermédiaires ne servent que pour un zoom très serré.
+ const fine=[.25,.5,1,2,3,4,6,7,8,9,12,15,25,30];
+ const main=levels.filter(v=>tx(v)>=low-1e-8&&tx(v)<=high+1e-8);
+ const candidates=main.length>=2?main:[...main,...fine.filter(v=>tx(v)>=low-1e-8&&tx(v)<=high+1e-8)];
+ if(candidates.length<2)return Array.from({length:5},(_,i)=>Math.max(0,itx(low+(high-low)*i/4)));
  const picked=[];
- for(const v of ordered){
-  if(!candidates.includes(v))continue;
-  const py=(high-tx(v))/(high-low)*pixels;
-  if(picked.every(p=>Math.abs(py-p.y)>=22))picked.push({v,y:py});
+ for(const v of candidates){
+  const py=(high-tx(v))/Math.max(high-low,1e-8)*pixels;
+  if(picked.every(p=>Math.abs(py-p.y)>=18))picked.push({v,y:py});
  }
  return picked.sort((a,b)=>a.v-b.v).map(p=>p.v);
 }
@@ -884,8 +897,8 @@ function drawChart(){
  const {visible,start,end}=ensureState(s,count);
  const logarithmic=asBB&&bbScale==='log';
  const v=p=>asBB?p.bb:p.chips;
- const f=value=>logarithmic?Math.log1p(Math.max(0,value)):value;
- const inv=t=>logarithmic?Math.expm1(t):t;
+ const f=value=>logarithmic?bbPokerMap(value):value;
+ const inv=t=>logarithmic?bbPokerUnmap(t):t;
  let min=Infinity,max=-Infinity;
  for(let i=start;i<=end;i++){const z=f(v(points[i]));if(z<min)min=z;if(z>max)max=z}
  let span=max-min;
@@ -1089,8 +1102,8 @@ function shareChart(c,points,x,y,w,h,asBB,scale){
  const left=x+94, right=x+w-25, top=y+40, bottom=y+h-64;
  const useLog=asBB&&scale==='log';
  const val=p=>asBB?p.bb:p.chips;
- const map=v=>useLog?Math.log1p(Math.max(0,v)):v;
- const inv=v=>useLog?Math.expm1(v):v;
+ const map=v=>useLog?bbPokerMap(v):v;
+ const inv=v=>useLog?bbPokerUnmap(v):v;
  let lo=Infinity,hi=-Infinity;
  for(const p of points){const v=Math.max(0,map(val(p)));if(v<lo)lo=v;if(v>hi)hi=v}
  if(!Number.isFinite(lo)||!Number.isFinite(hi)){lo=0;hi=1}
@@ -1182,7 +1195,7 @@ function makeShareCanvas(){
  statTile(g,63+2*(boxW+gap),565,boxW,'MAINS',fmt(s.hands.length));
  roundRect(g,63,725,954,417,20,'#102131');
  cardText(g,'ÉVOLUTION EN '+displayUnit,89,781,26,'#f3f7fa','800');
- cardText(g,asBB&&bbScale==='log'?'Échelle logarithmique':'Échelle linéaire',991,781,22,'#a9bfce','500','right');
+ cardText(g,asBB&&bbScale==='log'?'Échelle poker · paliers égaux':'Échelle linéaire',991,781,22,'#a9bfce','500','right');
  shareChart(g,points,67,783,946,360,asBB,bbScale);
  // Statistiques condensées et résultat final facultatif.
  const peakStr=bbText(peak);
@@ -1313,7 +1326,7 @@ $('finishForm').addEventListener('submit',ev=>{
  save();render();toast('Tournoi clôturé · Bilan PDF disponible');
 });
 
-// V16 : numéros de mains petits, gris, sans dièse, sous les changements de BB (PDF + application).
+// V17 : échelle poker : chaque palier 0-5, 5-10, 10-20, 20-40... a même hauteur (PDF + app).
 // Mini générateur PDF vectoriel WinAnsi : deux pages A4, fonctionnant hors ligne.
 function pdfReport(s,st){
  const W=595.28,H=841.89, BLUE=[0.15,0.42,0.73], NAVY=[0.06,0.12,0.20],MUTED=[0.38,0.44,0.52],GREEN=[0.07,0.55,0.39],RED=[0.77,0.22,0.29],GOLD=[0.78,0.55,0.14];
@@ -1355,10 +1368,10 @@ function pdfReport(s,st){
   const left=x+36,bottom=y+66,pw=width-47,ph=height-85;
   rect(x,y,width,height,[0.969,0.978,0.986]);
   const vals=points.map(p=>mode==='bb'?p.bb:p.chips);
-  const max=vals.reduce((m,v)=>Math.max(m,v),1),f=mode==='bb'?v=>Math.log1p(Math.max(0,v)):v=>Math.max(0,v);
+  const max=vals.reduce((m,v)=>Math.max(m,v),1),f=mode==='bb'?bbPokerMap:v=>Math.max(0,v);
   const upper=f(max*1.13),mapY=v=>bottom+(upper?f(v)/upper:0)*ph;
   const mapX=i=>left+(i/Math.max(1,points.length-1))*pw;
-  const ticks=mode==='bb'?[0,1,5,10,20,40,80,160,320,640,1280].filter(v=>v<=max*1.13):[0,.25,.5,.75,1].map(v=>Math.round(max*1.13*v));
+  const ticks=mode==='bb'?[0,5,10,20,40,80,160,320,640,1280,2560,5120,10240].filter(v=>v<=max*1.13):[0,.25,.5,.75,1].map(v=>Math.round(max*1.13*v));
   for(const t of ticks){const gy=mapY(t);stroke(left,gy,left+pw,gy,[0.86,0.89,0.92],.6);tx(mode==='bb'?String(t):String(Math.round(t/1000))+'k',x+3,gy-3,7,MUTED)}
   if(mode==='bb')for(const [v,col] of [[10,RED],[20,GOLD]]){if(v<=max*1.13){const yy=mapY(v);stroke(left,yy,left+pw,yy,col,1,true)}}
   const jump=[];
@@ -1394,7 +1407,7 @@ function pdfReport(s,st){
  metric(391,696,167,'Mains jouées (%)',st.percent===null?'—':fmt1(st.percent)+' %',GREEN);
  section('ÉVOLUTION DU STACK EN BB',619);
  plot(st.points,37,345,521,257,'bb');
- tx('Echelle ln(1+BB) - Traits verticaux : changements de BB (numéros des mains en dessous)',39,336,8,MUTED);
+ tx('Echelle poker : paliers de même hauteur (0-5, 5-10, 10-20, 20-40...)',39,336,8,MUTED);
  section('GAINS ET PERTES - MAINS JOUÉES',307);
  metric(37,280,167,'Gain moyen',st.averageGain===null?'—':'+'+fmt1(st.averageGain)+' BB',GREEN);
  metric(214,280,167,'Perte moyenne',st.averageLoss===null?'—':'-'+fmt1(st.averageLoss)+' BB',RED);
