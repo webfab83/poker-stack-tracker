@@ -81,6 +81,42 @@ header{margin-bottom:12px}
 .required-box{margin-top:10px}
 .chart-nav{margin-top:7px}
 @media(max-width:390px){.stats{margin-top:12px}.action{min-height:60px}}
+
+/* Carte partageable du tournoi : garde la V5 compacte. */
+#sharePanel[hidden]{display:none}
+.share-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.share-grid>div{min-width:0}
+.share-grid label{font-size:.82rem}
+.share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.share-actions button{flex:1 1 125px;min-height:47px}
+.share-preview{margin:14px auto 0;max-width:430px}
+.share-preview img{display:block;width:100%;height:auto;border-radius:13px;border:1px solid #37516a}
+.share-hint{font-size:.75rem;color:var(--sub);margin-top:9px;line-height:1.4}
+#shareToggle{font-size:.82rem;padding:9px 12px}
+@media(max-width:390px){.share-grid{gap:7px}.share-grid label{font-size:.76rem}}
+/* Modifier une main / ajouter un oubli sans toucher aux autres mains. */
+#handEditor[hidden],#olderHands[hidden]{display:none}
+#handEditor{border-color:#4b837a;background:linear-gradient(170deg,#183044,#111f31);scroll-margin-top:12px}
+.editor-summary{color:var(--sub);font-size:.8rem;margin:7px 0 12px;line-height:1.5}
+.editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.editor-grid label{font-size:.79rem}
+.editor-grid .wide{grid-column:1/-1}
+.editor-actions{display:flex;gap:8px;margin-top:15px}
+.editor-actions button{flex:1;min-height:48px}
+#insertPlacement[hidden]{display:none}
+#insertPlacement{padding:10px 11px;border:1px solid #335469;border-radius:11px;margin-bottom:12px}
+#insertPlacement input{max-width:140px}
+.history-item{grid-template-columns:30px minmax(0,1fr) auto;align-items:start}
+.history-item .hist-stack{text-align:right;font-size:.75rem;white-space:nowrap}
+.history-item .delete{padding:4px 7px}
+.hist-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.hist-actions button{font-size:.76rem;text-decoration:none;border:1px solid #36556b;border-radius:8px;background:#193147;padding:7px 9px;min-height:35px;color:#dceaf5}
+.hist-actions button:focus-visible{outline:2px solid #fff}
+#olderHands{width:100%;margin-top:12px}
+#historyTitle{line-height:1.3}
+#editSelected{margin-top:8px;min-height:37px;padding:6px 12px;font-size:.81rem}
+#editSelected[hidden]{display:none}
+@media(max-width:385px){.editor-grid{gap:7px}.history-item{gap:5px;padding:8px}.history-item .hist-stack{font-size:.69rem}}
 </style>
 </head>
 <body>
@@ -139,7 +175,7 @@ header{margin-bottom:12px}
 
 </section>
 <section class="panel" aria-labelledby="chartTitle">
- <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><span class="small" id="rangeLabel">Depuis le départ</span></div>
+ <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><div class="row" style="gap:7px"><span class="small" id="rangeLabel">Depuis le départ</span><button class="ghost" type="button" id="shareToggle" aria-expanded="false" aria-controls="sharePanel">↗ Partager</button></div></div>
  <div class="chart-controls"><div class="chart-switch" role="group" aria-label="Unité du graphique"><button type="button" id="graphChips" aria-pressed="true">Jetons</button><button type="button" id="graphBB" aria-pressed="false">BB</button></div></div>
  <div class="chart-subcontrols"><div class="scale-switch" id="bbScaleGroup" role="group" aria-label="Échelle du graphique en BB" hidden><button type="button" id="scaleLinear" aria-pressed="false">Linéaire</button><button type="button" id="scaleLog" aria-pressed="true">Logarithmique</button></div>
   <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
@@ -148,11 +184,51 @@ header{margin-bottom:12px}
  <div class="chart-nav"><label for="chartPan" class="sr-only">Déplacer la zone visible</label><input type="range" id="chartPan" min="0" max="0" step="1" value="0" aria-label="Faire défiler le graphique horizontalement"><span id="visibleRange">Toutes les mains</span></div>
  <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main"><div><span class="kicker" id="selectedTitle">Départ</span><div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div></div>
   <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div></div>
-  <div class="selected-detail" id="selectedDetail">Stack de départ</div><div id="selectedNote"></div></div>
+  <div class="selected-detail" id="selectedDetail">Stack de départ</div><div id="selectedNote"></div><button type="button" class="mini-btn" id="editSelected" hidden>✎ Modifier cette main</button></div>
 
 
 </section>
-<section class="panel" aria-labelledby="historyTitle"><div class="panel-head"><h2 id="historyTitle">Historique des mains</h2><span class="small" id="countLabel">0 main</span></div><div id="history" class="items"></div></section>
+<section class="panel" id="sharePanel" hidden aria-label="Partager un tournoi">
+ <div class="panel-head"><h2>Partager mon tournoi</h2><span class="small">Image PNG</span></div>
+ <div class="input-wrap"><label for="shareOutcome">Résultat</label><select id="shareOutcome"><option value="en_cours">En cours</option><option value="elimine">Éliminé</option><option value="itm">ITM</option><option value="finale">Table finale</option><option value="vainqueur">Vainqueur</option></select></div>
+ <div class="share-grid">
+  <div><label for="shareRank">Classement (facultatif)</label><input id="shareRank" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 17"></div>
+  <div><label for="shareEntrants">Participants (facultatif)</label><input id="shareEntrants" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 176"></div>
+ </div>
+ <div class="input-wrap"><label for="sharePrize">Gain du tournoi (€), facultatif</label><input id="sharePrize" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ex. 150"></div>
+ <div class="share-actions">
+  <button class="mini-btn" type="button" id="sharePreviewBtn">↻ Aperçu</button>
+  <button class="action gain" style="min-height:47px" type="button" id="shareImageBtn">↗ Partager l'image</button>
+  <button class="ghost" type="button" id="saveImageBtn">⇩ PNG</button>
+ </div>
+ <div id="sharePreviewArea" class="share-preview" hidden><img id="sharePreview" alt="Aperçu de la carte illustrée de ton tournoi, avec statistiques et graphique"></div>
+ <div class="share-hint">L'image contient tes statistiques et ta courbe, sans les notes de tes mains. Les champs facultatifs sont enregistrés avec ton tournoi.</div>
+</section>
+<section class="panel" aria-labelledby="historyTitle">
+ <div class="panel-head"><h2 id="historyTitle">Historique des mains</h2><span class="small" id="countLabel">0 main</span></div>
+ <button class="mini-btn full" type="button" id="addMissingHand">＋ Insérer une main oubliée</button>
+ <section id="handEditor" class="panel" hidden aria-label="Modifier ou insérer une main">
+  <div class="panel-head"><h2 id="editorTitle">Modifier une main</h2><button class="ghost" type="button" id="closeEditor" aria-label="Fermer le formulaire">✕</button></div>
+  <p id="editorSummary" class="editor-summary"></p>
+  <form id="handEditForm">
+   <div id="insertPlacement" hidden><label for="editorAfter">Insérer après la main n° (0 = avant la première)</label><input id="editorAfter" type="number" min="0" step="1" inputmode="numeric" required></div>
+   <div class="editor-grid">
+    <div class="wide"><label for="editorDelta">Variation nette (＋ gain / − perte, en jetons)</label><input id="editorDelta" type="number" step="1" inputmode="numeric" required placeholder="Ex. -1500, 0 ou 3500"></div>
+    <div><label for="editorKind">Type</label><select id="editorKind"><option value="manual">Main jouée</option><option value="fold">Fold</option><option value="skip">Sans variation</option></select></div>
+    <div><label for="editorPosition">Position</label><select id="editorPosition"><option value="other">Hors blindes</option><option value="sb">SB</option><option value="bb">BB</option></select></div>
+    <div><label for="editorSB">Petite blinde</label><input id="editorSB" type="number" min="0" step="1" inputmode="numeric" required></div>
+    <div><label for="editorBB">Grosse blinde</label><input id="editorBB" type="number" min="1" step="1" inputmode="numeric" required></div>
+    <div><label for="editorAnte">Ante</label><input id="editorAnte" type="number" min="0" step="1" inputmode="numeric" required></div>
+    <div><label for="editorAnteMode">Mode d'ante</label><select id="editorAnteMode"><option value="bba">Big Blind Ante</option><option value="each">Ante individuelle</option></select></div>
+    <div class="wide"><label for="editorDate">Date et heure</label><input id="editorDate" type="datetime-local" required></div>
+    <div class="wide"><label for="editorNote">Notes sur la main</label><textarea id="editorNote" maxlength="2000" rows="3" placeholder="Tes notes…"></textarea></div>
+   </div>
+   <div class="editor-actions"><button type="submit" class="action gain" style="min-height:48px">Enregistrer</button><button type="button" class="ghost" id="cancelEditor">Annuler</button></div>
+  </form>
+ </section>
+ <div id="history" class="items" style="margin-top:12px"></div>
+ <button type="button" class="skip" id="olderHands" hidden>Afficher les 30 mains précédentes</button>
+</section>
 
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -185,8 +261,8 @@ $('toggleSettings').addEventListener('click',()=>{const show=$('settingsPanel').
 $('quickTournament').addEventListener('click',()=>{$('settingsPanel').classList.add('show');$('toggleSettings').setAttribute('aria-expanded','true');$('sessions').scrollIntoView({behavior:'smooth',block:'center'});$('sessions').focus({preventScroll:true})});
 $('toggleNew').addEventListener('click',()=>{$('newForm').classList.toggle('show')});
 $('newForm').addEventListener('submit',e=>{e.preventDefault();const stack=cleanInt($('newStack').value),sb=cleanInt($('newSB').value),bb=cleanInt($('newBB').value),ante=cleanInt($('newAnte').value),anteMode=$('newAnteMode').value,name=$('newName').value.trim();if(!name||!Number.isSafeInteger(stack)||stack<=0||!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<=0||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)){toast('Paramètres invalides');return}const s={id:uid(),name,startStack:stack,sb,bb,initialBB:bb,ante,anteMode,createdAt:now(),hands:[]};data.sessions.push(s);data.activeId=s.id;save();$('newForm').classList.remove('show');$('settingsPanel').classList.remove('show');$('toggleSettings').setAttribute('aria-expanded','false');render();toast('Nouveau tournoi créé')});
-$('sessions').addEventListener('change',e=>{data.activeId=e.target.value;save();render()});
-$('deleteTournament').addEventListener('click',()=>{if(!confirm('Supprimer ce tournoi et son historique ? Exporte une sauvegarde avant si nécessaire.'))return;const s=current();data.sessions=data.sessions.filter(x=>x.id!==s.id);if(!data.sessions.length){const d=sample();data.sessions=d.sessions}data.activeId=data.sessions[0].id;save();render();toast('Tournoi supprimé')});
+$('sessions').addEventListener('change',e=>{closeHandEditor();data.activeId=e.target.value;save();render()});
+$('deleteTournament').addEventListener('click',()=>{if(!confirm('Supprimer ce tournoi et son historique ? Exporte une sauvegarde avant si nécessaire.'))return;closeHandEditor();const s=current();data.sessions=data.sessions.filter(x=>x.id!==s.id);if(!data.sessions.length){const d=sample();data.sessions=d.sessions}data.activeId=data.sessions[0].id;save();render();toast('Tournoi supprimé')});
 function download(content,type,filename){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}
 function slug(str){return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35)||'tournoi'}
 function csvCell(value){const str=String(value??'');return /[;"\r\n]/.test(str)?'"'+str.replace(/"/g,'""')+'"':str}
@@ -217,43 +293,127 @@ $('fileInput').addEventListener('change',async e=>{
   save();render();toast(missing.length+' tournoi(x) récupéré(s)');
  }catch(err){toast('Import impossible : '+err.message)}finally{e.target.value=''}
 });
+// L'ordre du tableau hands est l'ordre réel des mains. Toute correction recalcule la suite.
+let editingHand=null; // {mode: 'edit'|'insert', sessionId, index}
+let suppressAutoFollowOnce=false;
+let historyLimit=30;let historySessionId=null;
+function timelineIssue(stackStart,hands){
+ let stack=stackStart;
+ for(let i=0;i<hands.length;i++){
+  if(!Number.isSafeInteger(hands[i].delta)||!Number.isSafeInteger(stack+hands[i].delta)||stack+hands[i].delta<0)return i+1;
+  stack+=hands[i].delta;
+ }
+ return null;
+}
+function toLocalDate(iso){
+ const d=new Date(iso);if(!Number.isFinite(d.getTime()))return '';
+ const num=x=>String(x).padStart(2,'0');
+ return `${d.getFullYear()}-${num(d.getMonth()+1)}-${num(d.getDate())}T${num(d.getHours())}:${num(d.getMinutes())}`;
+}
+function insertedDate(s,index){
+ const before=index>0?Date.parse(s.hands[index-1].createdAt):Date.parse(s.createdAt);
+ const after=index<s.hands.length?Date.parse(s.hands[index].createdAt):NaN;
+ if(Number.isFinite(before)&&Number.isFinite(after))return new Date(after>before?before+(after-before)/2:before).toISOString();
+ if(Number.isFinite(before)&&!Number.isFinite(after))return new Date(Math.max(before,Date.now())).toISOString();
+ return now();
+}
+function openHandEditor(mode,index){
+ const s=current();if(!Number.isInteger(index)||index<0||index>(mode==='edit'?s.hands.length-1:s.hands.length))return;
+ editingHand={mode,sessionId:s.id,index};
+ const hand=mode==='edit'?s.hands[index]:null;
+ const nearby=hand||(index?s.hands[index-1]:s.hands[0])||s;
+ $('editorTitle').textContent=mode==='edit'?`✎ Modifier la main n° ${index+1}`:'＋ Main oubliée';
+ $('editorSummary').textContent=mode==='edit'?'Les stacks suivants, la courbe et les exports seront recalculés.':'Choisis l’endroit où insérer la main ; les stacks suivants seront recalculés.';
+ $('insertPlacement').hidden=mode!=='insert';
+ $('editorAfter').max=String(s.hands.length);
+ $('editorAfter').value=String(index);
+ $('editorDelta').value=hand?String(hand.delta):'0';
+ $('editorKind').value=hand?.kind==='fold'?'fold':hand?.kind==='skip'?'skip':'manual';
+ $('editorPosition').value=['other','sb','bb'].includes(hand?.position)?hand.position:'other';
+ $('editorSB').value=nearby.sb??s.sb;
+ $('editorBB').value=nearby.bb??s.bb;
+ $('editorAnte').value=nearby.ante??s.ante;
+ $('editorAnteMode').value=nearby.anteMode??s.anteMode;
+ $('editorDate').value=toLocalDate(hand?.createdAt||insertedDate(s,index));
+ $('editorNote').value=hand?.note||'';
+ $('handEditor').hidden=false;
+ $('handEditor').scrollIntoView({behavior:'smooth',block:'start'});
+ $('editorDelta').focus({preventScroll:true});
+}
+function closeHandEditor(){editingHand=null;$('handEditor').hidden=true}
+$('closeEditor').addEventListener('click',closeHandEditor);
+$('cancelEditor').addEventListener('click',closeHandEditor);
+$('addMissingHand').addEventListener('click',()=>openHandEditor('insert',current().hands.length));
+$('editSelected').addEventListener('click',()=>{if(selectedIndex>0)openHandEditor('edit',selectedIndex-1)});
+$('handEditForm').addEventListener('submit',event=>{
+ event.preventDefault();if(!editingHand)return;
+ const s=current(),e=editingHand;
+ if(e.sessionId!==s.id){closeHandEditor();toast('Le tournoi a changé');return}
+ const index=e.mode==='insert'?cleanInt($('editorAfter').value):e.index;
+ const delta=cleanInt($('editorDelta').value),sb=cleanInt($('editorSB').value),bb=cleanInt($('editorBB').value),ante=cleanInt($('editorAnte').value);
+ const anteMode=$('editorAnteMode').value,kind=$('editorKind').value,position=$('editorPosition').value,note=$('editorNote').value.trim();
+ const timestamp=new Date($('editorDate').value);
+ if(!Number.isSafeInteger(index)||index<0||index>s.hands.length||(e.mode==='edit'&&index>=s.hands.length)) {toast('Numéro de main invalide');return}
+ if(!Number.isSafeInteger(delta)||!Number.isSafeInteger(sb)||sb<0||!Number.isSafeInteger(bb)||bb<1||sb>bb||!Number.isSafeInteger(ante)||ante<0||!['bba','each'].includes(anteMode)||!['manual','fold','skip'].includes(kind)||!['other','sb','bb'].includes(position)||note.length>2000||!Number.isFinite(timestamp.getTime())){
+  toast('Vérifie la variation, les blindes et la date');return;
+ }
+ const old=e.mode==='edit'?s.hands[index]:null;
+ const changed={id:old?.id||uid(),delta,sb,bb,ante,anteMode,kind,position,note,createdAt:timestamp.toISOString()};
+ const next=s.hands.slice();
+ if(e.mode==='edit')next[index]=changed;else next.splice(index,0,changed);
+ const issue=timelineIssue(s.startStack,next);
+ if(issue!==null){toast(`Correction impossible : stack négatif à la main ${issue}`);return}
+ s.hands=next;
+ save();closeHandEditor();
+ const selected=index+1;
+ selectedIndex=selected;
+ if(viewCount!==null){
+  const visible=Math.min(viewCount,s.hands.length+1);
+  if(selected<viewStart)viewStart=selected;
+  else if(selected>=viewStart+visible)viewStart=Math.max(0,selected-visible+1);
+ }
+ suppressAutoFollowOnce=true;render();selectPoint(selected,true);
+ toast(e.mode==='edit'?'Main corrigée · graphique recalculé':'Main insérée · graphique recalculé');
+});
+$('olderHands').addEventListener('click',()=>{historyLimit+=30;render()});
 function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;updateFoldLabel();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
 const sel=$('sessions');if(sel.options.length!==data.sessions.length||[...sel.options].some((o,i)=>o.value!==data.sessions[i].id)){sel.replaceChildren();for(const session of data.sessions){const opt=document.createElement('option');opt.value=session.id;opt.textContent=session.name;sel.appendChild(opt)}}sel.value=s.id;
 const hist=$('history');hist.replaceChildren();
+if(historySessionId!==s.id){historySessionId=s.id;historyLimit=30}
 if(!s.hands.length){
  const p=document.createElement('p');p.className='empty';p.textContent='Aucune main enregistrée';hist.appendChild(p);
 }else{
  let cumulative=t;
- for(let idx=s.hands.length-1;idx>=Math.max(0,s.hands.length-30);idx--){
+ for(let idx=s.hands.length-1;idx>=Math.max(0,s.hands.length-historyLimit);idx--){
   const h=s.hands[idx],item=document.createElement('div');item.className='history-item';
   const index=document.createElement('span');index.className='index';index.textContent='#'+(idx+1);
   const detail=document.createElement('div');
   const val=document.createElement('div');val.className='hist-delta '+(h.delta>0?'pos':h.delta<0?'neg':'info');val.textContent=(h.delta>0?'+':'')+fmt(h.delta)+' jetons'+(h.kind==='fold'?' · fold':'');
-  const sub=document.createElement('div');sub.className='hist-sub';sub.textContent=new Date(h.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' · '+fmt(h.bb)+' BB'+(h.kind==='fold'?' · '+({other:'hors blindes',sb:'SB',bb:'BB'}[h.position]||''): '');
+  const sub=document.createElement('div');sub.className='hist-sub';
+  const dt=new Date(h.createdAt),time=Number.isFinite(dt.getTime())?dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'?';
+  sub.textContent=time+' · BB '+fmt(h.bb)+(h.kind==='fold'?' · '+({other:'hors blindes',sb:'SB',bb:'BB'}[h.position]||''): '');
   detail.append(val,sub);
   if(h.note){const note=document.createElement('div');note.className='hist-note';note.textContent='📝 '+h.note;detail.appendChild(note)}
   const controls=document.createElement('div');controls.className='hist-actions';
-  const edit=document.createElement('button');edit.className='note-edit-link';edit.type='button';edit.textContent=h.note?'✎ Modifier la note':'＋ Ajouter une note';edit.setAttribute('aria-label',`Modifier la note de la main ${idx+1}`);
-  edit.addEventListener('click',()=>{
-   if(controls.querySelector('textarea'))return;
-   edit.hidden=true;
-   const editor=document.createElement('div');editor.className='note-editor';
-   const field=document.createElement('textarea');field.value=h.note||'';field.maxLength=2000;field.rows=3;field.setAttribute('aria-label',`Note de la main ${idx+1}`);
-   const buttons=document.createElement('div');buttons.className='row';
-   const confirm=document.createElement('button');confirm.className='mini-btn';confirm.type='button';confirm.textContent='Enregistrer la note';
-   const cancel=document.createElement('button');cancel.className='ghost';cancel.type='button';cancel.textContent='Annuler';
-   confirm.addEventListener('click',()=>{h.note=field.value.trim();save();render();toast('Note enregistrée')});
-   cancel.addEventListener('click',()=>{editor.remove();edit.hidden=false});
-   buttons.append(confirm,cancel);editor.append(field,buttons);controls.appendChild(editor);field.focus();
-  });
-  controls.appendChild(edit);detail.appendChild(controls);
-  const stack=document.createElement('span');stack.className='small';stack.textContent=fmt(cumulative)+' jetons';
+  const edit=document.createElement('button');edit.type='button';edit.textContent='✎ Modifier';edit.setAttribute('aria-label',`Modifier la main ${idx+1}`);edit.addEventListener('click',()=>openHandEditor('edit',idx));
+  const insert=document.createElement('button');insert.type='button';insert.textContent='＋ Avant';insert.setAttribute('aria-label',`Insérer une main avant la main ${idx+1}`);insert.addEventListener('click',()=>openHandEditor('insert',idx));
+  controls.append(edit,insert);detail.appendChild(controls);
+  const side=document.createElement('div');side.style.textAlign='right';
+  const stack=document.createElement('div');stack.className='hist-stack small';stack.textContent=fmt(cumulative);
   const del=document.createElement('button');del.className='delete';del.type='button';del.textContent='✕';del.title='Supprimer cette main';del.setAttribute('aria-label',`Supprimer la main ${idx+1}`);
-  del.addEventListener('click',()=>{if(!confirm('Supprimer cette main de l’historique ?'))return;s.hands.splice(idx,1);save();render();toast('Main supprimée')});
-  item.append(index,detail,stack,del);hist.append(item);cumulative-=h.delta;
+  del.addEventListener('click',()=>{
+   if(!confirm('Supprimer cette main de l’historique ?'))return;
+   const next=s.hands.slice();next.splice(idx,1);
+   const issue=timelineIssue(s.startStack,next);
+   if(issue!==null){toast(`Suppression impossible : stack négatif à la main ${issue}`);return}
+   s.hands=next;closeHandEditor();save();render();toast('Main supprimée · stack recalculé');
+  });
+  side.append(stack,del);item.append(index,detail,side);hist.append(item);cumulative-=h.delta;
  }
- if(s.hands.length>30){const p=document.createElement('p');p.className='small';p.style.textAlign='center';p.textContent='30 dernières mains · CSV : historique complet';hist.appendChild(p)}
 }
+const left=Math.max(0,s.hands.length-historyLimit);
+$('olderHands').hidden=left===0;
+$('olderHands').textContent=`Afficher les ${Math.min(30,left)} mains précédentes`;
 drawChart()}
 // État de visualisation (la sauvegarde du tournoi et des notes reste 100 % compatible V4).
 const SCALE_KEY='poker-stack-bb-scale-v5';
@@ -271,6 +431,7 @@ function setGraphMode(mode){
  $('graphChips').setAttribute('aria-pressed',String(graphMode==='chips'));
  $('graphBB').setAttribute('aria-pressed',String(graphMode==='bb'));
  $('bbScaleGroup').hidden=graphMode!=='bb';
+ if(!$('sharePanel').hidden)clearSharePreview();
  drawChart();
 }
 function setBBScale(scale){
@@ -327,6 +488,7 @@ function updateSelected(points){
   ? 'Stack initial · BB '+fmt(p.blind)
   : (hand.delta>0?'+':'')+fmt(hand.delta)+' jetons · Blindes '+fmt(hand.sb??0)+' / '+fmt(p.blind)+' · Ante '+fmt(hand.ante??0)+' · '+new Date(hand.createdAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
  $('selectedNote').textContent=hand?.note?'📝 '+hand.note:'';
+ $('editSelected').hidden=!hand;
 }
 function selectPoint(idx,scrollIntoView=false){
  const count=current().hands.length+1;
@@ -448,13 +610,200 @@ let prevSession=null,prevN=null;
 const originalRender=render;
 render=function(){
  const s=current(),n=s.hands.length;
- if(chartSessionId===s.id&&prevSession===s.id&&prevN!==null&&n>prevN){
+ if(!suppressAutoFollowOnce&&chartSessionId===s.id&&prevSession===s.id&&prevN!==null&&n>prevN){
   if(selectedIndex===prevN)selectedIndex=n;
   if(viewCount!==null&&viewStart+viewCount>=prevN+1){viewStart=Math.max(0,n+1-viewCount)}
  }
+ suppressAutoFollowOnce=false;
  prevSession=s.id;prevN=n;
  originalRender();
+ if(!$('sharePanel').hidden){shareSyncSession();clearSharePreview()}
 };
+
+// Export partageable en PNG. Ne modifie aucune donnée de jeu et n'envoie rien sur un serveur.
+const SHARE_RESULTS={en_cours:'EN COURS',elimine:'ÉLIMINÉ',itm:'ITM',finale:'TABLE FINALE',vainqueur:'VAINQUEUR'};
+let shareSessionId=null, shareBlob=null, sharePreviewURL=null;
+function clearSharePreview(){
+ shareBlob=null;
+ if(sharePreviewURL){URL.revokeObjectURL(sharePreviewURL);sharePreviewURL=null}
+ $('sharePreviewArea').hidden=true;$('sharePreview').removeAttribute('src');
+}
+function shareFieldValues(){
+ const s=current();
+ $('shareOutcome').value=Object.hasOwn(SHARE_RESULTS,s.shareOutcome)?s.shareOutcome:'en_cours';
+ $('shareRank').value=Number.isSafeInteger(s.shareRank)&&s.shareRank>0?s.shareRank:'';
+ $('shareEntrants').value=Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0?s.shareEntrants:'';
+ $('sharePrize').value=typeof s.sharePrize==='number'&&Number.isFinite(s.sharePrize)&&s.sharePrize>=0?s.sharePrize:'';
+}
+function shareSyncSession(){
+ if(shareSessionId===current().id)return;
+ shareSessionId=current().id;shareFieldValues();clearSharePreview();
+}
+function setShareMetadata(){
+ const s=current();
+ const rankStr=$('shareRank').value.trim();
+ const totalStr=$('shareEntrants').value.trim();
+ const prizeStr=$('sharePrize').value.trim().replace(',','.');
+ const rank=rankStr===''?null:cleanInt(rankStr);
+ const entrants=totalStr===''?null:cleanInt(totalStr);
+ const prize=prizeStr===''?null:Number(prizeStr);
+ if((rank!==null&&(!Number.isSafeInteger(rank)||rank<1)) || (entrants!==null&&(!Number.isSafeInteger(entrants)||entrants<1)) || (rank!==null&&entrants!==null&&rank>entrants) || (prize!==null&&(!Number.isFinite(prize)||prize<0||prize>1e10))){
+  toast('Vérifie le classement, les participants et le gain');return false;
+ }
+ s.shareOutcome=$('shareOutcome').value in SHARE_RESULTS?$('shareOutcome').value:'en_cours';
+ s.shareRank=rank;s.shareEntrants=entrants;s.sharePrize=prize;
+ save();clearSharePreview();return true;
+}
+$('shareToggle').addEventListener('click',()=>{
+ const p=$('sharePanel');p.hidden=!p.hidden;
+ $('shareToggle').setAttribute('aria-expanded',String(!p.hidden));
+ if(!p.hidden){shareSyncSession();p.scrollIntoView({behavior:'smooth',block:'start'});void generateSharePreview()}
+});
+for(const id of ['shareOutcome','shareRank','shareEntrants','sharePrize']){
+ $(id).addEventListener('change',setShareMetadata);
+}
+function roundRect(c,x,y,w,h,r,fill){
+ c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();
+}
+function cardText(c,txt,x,y,size,color='#f3f7fa',weight='600',align='left'){
+ c.fillStyle=color;c.font=`${weight} ${size}px system-ui,-apple-system,Arial,sans-serif`;c.textAlign=align;c.textBaseline='alphabetic';c.fillText(String(txt),x,y);
+}
+function wrappedText(c,str,x,y,maxWidth,lineHeight,maxLines,size=54){
+ const words=String(str).trim().split(/\s+/);const lines=[];let line='';
+ c.font=`800 ${size}px system-ui,Arial,sans-serif`;
+ for(const word of words){
+  const probe=line?line+' '+word:word;
+  if(c.measureText(probe).width<=maxWidth){line=probe;continue}
+  if(line)lines.push(line);
+  line=word;
+ }
+ if(line)lines.push(line);
+ for(let i=0;i<Math.min(maxLines,lines.length);i++){
+  let text=lines[i];if(i===maxLines-1&&lines.length>maxLines){
+   while(text.length&&c.measureText(text+'…').width>maxWidth)text=text.slice(0,-1);
+   text+='…';
+  }
+  cardText(c,text,x,y+i*lineHeight,size,'#f3f7fa','800');
+ }
+}
+function statTile(c,x,y,w,title,value,color='#f3f7fa'){
+ roundRect(c,x,y,w,132,17,'#15293a');
+ cardText(c,title,x+20,y+36,21,'#9fb7ca','700');
+ cardText(c,value,x+20,y+94,38,color,'800');
+}
+function shareChart(c,points,x,y,w,h,asBB,scale){
+ const left=x+94, right=x+w-25, top=y+40, bottom=y+h-64;
+ const useLog=asBB&&scale==='log';
+ const val=p=>asBB?p.bb:p.chips;
+ const map=v=>useLog?Math.log1p(Math.max(0,v)):v;
+ const inv=v=>useLog?Math.expm1(v):v;
+ let lo=Infinity,hi=-Infinity;
+ for(const p of points){const v=Math.max(0,map(val(p)));if(v<lo)lo=v;if(v>hi)hi=v}
+ if(!Number.isFinite(lo)||!Number.isFinite(hi)){lo=0;hi=1}
+ let dif=hi-lo;
+ if(dif<1e-8){dif=useLog?.25:Math.max(1,hi*.14);lo=Math.max(0,lo-dif*.6);hi+=dif*.6}
+ else{lo=Math.max(0,lo-dif*.16);hi+=dif*.16}
+ const ty=v=>top+(hi-map(v))/(hi-lo)*(bottom-top);
+ const tx=i=>left+(points.length===1?(right-left)/2:i/(points.length-1)*(right-left));
+ const axis=v=>asBB?(v>=100?fmt(Math.round(v)):v.toLocaleString('fr-FR',{maximumFractionDigits:1})):v>=1000?(v/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+'k':fmt(Math.round(v));
+ c.font='23px system-ui,Arial,sans-serif';
+ for(let j=0;j<5;j++){
+  const yy=bottom-(bottom-top)*j/4;
+  c.beginPath();c.moveTo(left,yy);c.lineTo(right,yy);c.strokeStyle='#30485d';c.lineWidth=1.6;c.stroke();
+  const label=axis(Math.max(0,inv(lo+(hi-lo)*j/4)));
+  cardText(c,label,left-14,yy+9,23,'#a0b7c8','500','right');
+ }
+ c.beginPath();c.moveTo(tx(0),bottom);
+ for(let i=0;i<points.length;i++)c.lineTo(tx(i),ty(val(points[i])));
+ c.lineTo(tx(points.length-1),bottom);c.closePath();
+ const grad=c.createLinearGradient(0,top,0,bottom);
+ grad.addColorStop(0,'rgba(45,212,167,.28)');grad.addColorStop(1,'rgba(45,212,167,0)');c.fillStyle=grad;c.fill();
+ if(points.length>1){
+  c.beginPath();c.moveTo(tx(0),ty(val(points[0])));
+  points.forEach((p,i)=>{if(i)c.lineTo(tx(i),ty(val(p)))});
+  c.lineWidth=5;c.strokeStyle='#2dd4a7';c.lineJoin='round';c.lineCap='round';c.stroke();
+ }
+ const last=points[points.length-1];const endX=tx(points.length-1),endY=ty(val(last));
+ c.beginPath();c.arc(endX,endY,9,0,Math.PI*2);c.fillStyle='#f6d585';c.fill();
+ cardText(c,'DÉPART',left,bottom+42,23,'#9fb7c8','700');
+ cardText(c,`${points.length-1} MAINS`,right,bottom+42,23,'#9fb7c8','700','right');
+}
+function makeShareCanvas(){
+ const s=current(),points=buildPoints(s),t=total(s),net=t-s.startStack;
+ let peak=0;for(const p of points)if(p.bb>peak)peak=p.bb;
+ const asBB=graphMode==='bb',endBB=t/s.bb;
+ const displayUnit=asBB?'BB':'JETONS';
+ const c=document.createElement('canvas');c.width=1080;c.height=1350;
+ const g=c.getContext('2d',{alpha:false});
+ // Composition verticale destinée aux stories et au partage WhatsApp.
+ g.fillStyle='#09111d';g.fillRect(0,0,1080,1350);
+ const bg=g.createLinearGradient(0,0,1080,1220);bg.addColorStop(0,'#152c3a');bg.addColorStop(.52,'#091521');bg.addColorStop(1,'#09111d');g.fillStyle=bg;g.fillRect(0,0,1080,1350);
+ g.fillStyle='#2dd4a7';g.fillRect(57,56,7,61);
+ cardText(g,'STACK.',82,107,56,'#f4f8fc','900');
+ cardText(g,'TOURNOI DE POKER',1025,103,25,'#9fb7ca','700','right');
+ const d=new Date(s.createdAt);
+ const date=!Number.isNaN(d.getTime())?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}):'';
+ if(date)cardText(g,date.toLocaleUpperCase(),63,164,24,'#9fb7ca','600');
+ wrappedText(g,s.name,63,244,935,65,2,57);
+ // Résultat déclaré par l'utilisateur, jamais déduit des jetons.
+ const status=SHARE_RESULTS[s.shareOutcome]||'EN COURS';
+ const statusY=330;
+ roundRect(g,63,statusY,245,55,24,'#163b35');cardText(g,status,185,statusY+38,28,'#53e1bd','800','center');
+ const ranking=(Number.isSafeInteger(s.shareRank)&&s.shareRank>0)?`${s.shareRank}${s.shareRank===1?'er':'e'}${Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0?' / '+fmt(s.shareEntrants):''}`:((Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0)?fmt(s.shareEntrants)+' participants':'');
+ if(ranking)cardText(g,ranking,1020,statusY+39,31,'#ecf3f8','700','right');
+ // Chiffre principal du tournoi.
+ const mainVal=asBB?bbText(endBB):fmt(t);
+ cardText(g,'STACK '+(status==='EN COURS'?'ACTUEL':'FINAL'),63,447,25,'#9fb7ca','700');
+ cardText(g,mainVal,63,530,71,'#f3f7fa','900');
+ cardText(g,asBB?fmt(t)+' jetons':bbText(endBB),1017,524,32,'#57deb8','750','right');
+ const gap=14,boxW=(954-2*gap)/3;
+ statTile(g,63,565,boxW,'DÉPART',asBB?bbText(s.startStack/(s.initialBB||s.bb)):fmt(s.startStack));
+ statTile(g,63+boxW+gap,565,boxW,'VARIATION',(net>0?'+':'')+fmt(net),net>0?'#53e1bd':net<0?'#ff777a':'#f3f7fa');
+ statTile(g,63+2*(boxW+gap),565,boxW,'MAINS',fmt(s.hands.length));
+ roundRect(g,63,725,954,417,20,'#102131');
+ cardText(g,'ÉVOLUTION EN '+displayUnit,89,781,26,'#f3f7fa','800');
+ cardText(g,asBB&&bbScale==='log'?'Échelle logarithmique':'Échelle linéaire',991,781,22,'#a9bfce','500','right');
+ shareChart(g,points,67,783,946,360,asBB,bbScale);
+ // Statistiques condensées et résultat final facultatif.
+ const peakStr=bbText(peak);
+ cardText(g,'PIC : '+peakStr,65,1190,26,'#55d9b4','750');
+ if(typeof s.sharePrize==='number'&&s.sharePrize>=0&&Number.isFinite(s.sharePrize)){
+  cardText(g,'GAIN : '+s.sharePrize.toLocaleString('fr-FR',{maximumFractionDigits:2})+' €',1017,1190,26,'#f6d585','750','right');
+ }
+ g.fillStyle='#2b4053';g.fillRect(63,1224,954,2);
+ cardText(g,'STACK · MON TOURNOI EN UNE IMAGE',63,1280,23,'#a6bccc','700');
+ cardText(g,'webfab83.github.io/poker-stack-tracker/',1017,1280,21,'#6f9fb5','500','right');
+ return c;
+}
+async function generateSharePreview(){
+ try{
+  clearSharePreview();const canvas=makeShareCanvas();
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+  if(!blob)throw Error('Image non disponible');
+  shareBlob=blob;sharePreviewURL=URL.createObjectURL(blob);
+  $('sharePreview').src=sharePreviewURL;$('sharePreviewArea').hidden=false;
+  return blob;
+ }catch(e){toast('Impossible de générer l’image');return null}
+}
+$('sharePreviewBtn').addEventListener('click',()=>void generateSharePreview());
+function downloadShareBlob(blob){
+ const filename='STACK-'+slug(current().name)+'.png';
+ const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);
+}
+$('saveImageBtn').addEventListener('click',async()=>{
+ const blob=await generateSharePreview();if(!blob)return;
+ downloadShareBlob(blob);toast('Image PNG téléchargée');
+});
+$('shareImageBtn').addEventListener('click',async()=>{
+ const blob=await generateSharePreview();if(!blob)return;
+ const file=new File([blob],'STACK-'+slug(current().name)+'.png',{type:'image/png'});
+ if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+  try{await navigator.share({files:[file],title:'Mon tournoi poker — STACK'});return}
+  catch(e){if(e.name==='AbortError')return}
+ }
+ downloadShareBlob(blob);toast('Image téléchargée : tu peux l’envoyer sur WhatsApp');
+});
+
 save();render();setBBScale(bbScale);setGraphMode(graphMode);
 })();
 </script>
