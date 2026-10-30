@@ -299,7 +299,7 @@ header{margin-bottom:12px}
   <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
  </div>
  <div class="chartbox"><canvas id="chart" tabindex="0" role="img" aria-label="Graphique interactif. Toucher une position pour sélectionner une main. Flèches du clavier : main précédente ou suivante."></canvas></div>
- <div class="chart-key" id="chartKey" aria-label="Repères du graphique"><span id="thresholdKey" class="chart-key-items"><span class="key-stroke key-ten"></span>10 BB <span class="key-stroke key-twenty"></span>20 BB</span><span class="chart-key-item"><span class="key-vertical"></span>Changement de BB (#main)</span></div>
+ <div class="chart-key" id="chartKey" aria-label="Repères du graphique"><span id="thresholdKey" class="chart-key-items"><span class="key-stroke key-ten"></span>10 BB <span class="key-stroke key-twenty"></span>20 BB</span><span class="chart-key-item"><span class="key-vertical"></span>Changement de BB (n° de main)</span></div>
  <div class="chart-nav"><label for="chartPan" class="sr-only">Déplacer la zone visible</label><input type="range" id="chartPan" min="0" max="0" step="1" value="0" aria-label="Faire défiler le graphique horizontalement"><span id="visibleRange">Toutes les mains</span></div>
  <div class="selected-hand" id="selectedCard" role="status" aria-live="polite"><div class="selected-main"><div><span class="kicker" id="selectedTitle">Départ</span><div class="selected-values"><strong id="selectedStack">30 000 jetons</strong><span class="badge" id="selectedBB">150 BB</span></div></div>
   <div class="selected-actions" role="group" aria-label="Parcourir les mains"><button type="button" id="selectPrev" aria-label="Main précédente">◀</button><button type="button" id="selectNext" aria-label="Main suivante">▶</button></div></div>
@@ -839,7 +839,7 @@ function updateSelected(points){
  $('selectedStack').textContent=fmt(p.chips)+' jetons';
  $('selectedBB').textContent=bbText(p.bb);
  const prior=idx>0?points[idx-1]:null;
- const levelText=prior&&p.blind!==prior.blind?` · ↑ BB ${fmt(prior.blind)} → ${fmt(p.blind)}`:'';
+ const levelText=prior&&p.blind!==prior.blind?` · BB passe de ${fmt(prior.blind)} à ${fmt(p.blind)}`:'';
  $('selectedDetail').textContent=idx===0
   ? 'Stack initial · BB '+fmt(p.blind)
   : (hand.delta>0?'+':'')+fmt(hand.delta)+' jetons · Blindes '+fmt(hand.sb??0)+' / '+fmt(p.blind)+' · Ante '+fmt(hand.ante??0)+levelText+' · '+new Date(hand.createdAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
@@ -892,7 +892,8 @@ function drawChart(){
  if(span<1e-8){span=logarithmic?.32:Math.max(1,max*.15);min=Math.max(0,min-span*.5);max=max+span*.5}
  else {min=Math.max(0,min-span*.14);max=max+span*.14}
  span=Math.max(max-min,1e-8);
- const left=asBB?55:54,right=12,top=29,bottom=30;
+ // Espace réservé sous le graphique pour les numéros discrets des changements de BB.
+ const left=asBB?55:54,right=12,top=21,bottom=52;
  const gw=Math.max(w-left-right,1),gh=Math.max(h-top-bottom,1);
  const x=i=>left+(i-start)/Math.max(visible-1,1)*gw;
  const y=value=>top+(max-f(value))/span*gh;
@@ -927,25 +928,25 @@ function drawChart(){
  }
  // Le premier point d'un niveau reçoit son trait vertical. Pas de décalage de l'historique.
  const changes=levelChanges(points,start,end);
- let lastBadgeX=-Infinity;
+ const lastByLane=[-Infinity,-Infinity,-Infinity];
  for(const change of changes){
   const xx=x(change.i);
   ctx.beginPath();ctx.moveTo(xx,top);ctx.lineTo(xx,top+gh);
-  ctx.setLineDash([3,5]);ctx.strokeStyle='#79b9eeaa';ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);
-  // Toujours tracer le trait, mais espacer les petits libellés sur mobile.
-  const txt='#'+change.i+' · BB '+tickLabel(change.to);
-  ctx.font='bold 10px system-ui,sans-serif';
-  const tw=ctx.measureText(txt).width+11;
+  ctx.setLineDash([3,5]);ctx.strokeStyle='#79b9ee88';ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);
+  // Le numéro seul, en gris et sous la ligne : aucun dièse ni cartouche.
+  const txt=String(change.i);
+  ctx.font='10px system-ui,sans-serif';
+  const tw=ctx.measureText(txt).width;
   const bx=clamp(xx-tw/2,left,w-right-tw);
-  if(bx-lastBadgeX>=tw+5){
-   ctx.fillStyle='#234359';ctx.fillRect(bx,6,tw,17);
-   ctx.fillStyle='#d4ecff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,bx+tw/2,14.5);
-   lastBadgeX=bx;
-  }
+  let lane=lastByLane.findIndex(last=>bx>last+5);
+  if(lane<0)lane=lastByLane.indexOf(Math.min(...lastByLane));
+  ctx.fillStyle='#8b9dad';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(txt,bx,top+gh+8+lane*11);
+  lastByLane[lane]=bx+tw;
  }
- ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#9fb6c8';ctx.font='11px system-ui,sans-serif';
- ctx.fillText('Main '+start,left+20,h-24);
- if(end>start)ctx.fillText('Main '+end,w-right-23,h-24);
+ ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#9fb6c8';ctx.font='10px system-ui,sans-serif';
+ ctx.fillText('Main '+start,left+20,h-11);
+ if(end>start)ctx.fillText('Main '+end,w-right-23,h-11);
  // On dessine uniquement les points compris dans la fenêtre de zoom.
  const baseline=top+gh;
  if(visible>1){
@@ -1117,15 +1118,20 @@ function shareChart(c,points,x,y,w,h,asBB,scale){
   c.fillStyle='#102131';c.fillRect(right-112,yy-15,112,29);
   cardText(c,threshold+' BB',right-7,yy+7,22,color,'750','right');
  }
- // Repères verticaux pour les changements réels dans l'historique des blindes.
- let lastLabel=-Infinity;
+ // Repères verticaux : numéro sobre, centré sous chaque ligne, sans dièse.
+ const occupied=[-Infinity,-Infinity,-Infinity];
  for(const change of levelChanges(points,0,points.length-1)){
   const xx=tx(change.i);
   c.beginPath();c.moveTo(xx,top);c.lineTo(xx,bottom);
   c.setLineDash([7,8]);c.strokeStyle='#79b9eea0';c.lineWidth=2;c.stroke();c.setLineDash([]);
-  if(xx-lastLabel>105){
-   cardText(c,'#'+change.i+' · BB '+fmt(change.to),Math.min(right-10,xx+10),top-7,18,'#b9e2ff','700');lastLabel=xx;
-  }
+  const txt=String(change.i);
+  c.font='400 18px system-ui,Arial,sans-serif';
+  const tw=c.measureText(txt).width;
+  const bx=Math.max(left,Math.min(right-tw,xx-tw/2));
+  let lane=occupied.findIndex(last=>bx>last+9);
+  if(lane<0)lane=occupied.indexOf(Math.min(...occupied));
+  cardText(c,txt,bx,bottom+20+lane*12,18,'#899dad','400');
+  occupied[lane]=bx+tw;
  }
  c.beginPath();c.moveTo(tx(0),bottom);
  for(let i=0;i<points.length;i++)c.lineTo(tx(i),ty(val(points[i])));
@@ -1307,7 +1313,7 @@ $('finishForm').addEventListener('submit',ev=>{
  save();render();toast('Tournoi clôturé · Bilan PDF disponible');
 });
 
-// V15 : numéro de la main visible AU PIED de chaque changement de BB sur les deux graphiques PDF.
+// V16 : numéros de mains petits, gris, sans dièse, sous les changements de BB (PDF + application).
 // Mini générateur PDF vectoriel WinAnsi : deux pages A4, fonctionnant hors ligne.
 function pdfReport(s,st){
  const W=595.28,H=841.89, BLUE=[0.15,0.42,0.73], NAVY=[0.06,0.12,0.20],MUTED=[0.38,0.44,0.52],GREEN=[0.07,0.55,0.39],RED=[0.77,0.22,0.29],GOLD=[0.78,0.55,0.14];
@@ -1344,7 +1350,7 @@ function pdfReport(s,st){
  function section(title,y){tx(title,37,y,11,NAVY,true);stroke(37,y-8,W-37,y-8,[0.83,0.87,0.90],.7)}
  function metric(x,y,w,title,value,color=NAVY){rect(x,y-53,w,65,[0.95,0.97,0.98]);tx(title,x+11,y-7,8,MUTED);tx(value,x+11,y-30,15,color,true)}
  function plot(points,x,y,width,height,mode){
-  // On réserve une bande sous la courbe pour les numéros des mains (#N).
+  // On réserve une bande sous la courbe pour les numéros des mains.
   // Les libellés sont sous les traits verticaux, pas au-dessus du graphique.
   const left=x+36,bottom=y+66,pw=width-47,ph=height-85;
   rect(x,y,width,height,[0.969,0.978,0.986]);
@@ -1360,17 +1366,14 @@ function pdfReport(s,st){
   const lanes=[-Infinity,-Infinity,-Infinity];
   for(const idx of jump){
    const xx=mapX(idx);
-   stroke(xx,bottom,xx,bottom+ph,[0.43,0.62,0.79],.8,true);
-   const label='#'+idx;
-   const labelW=Math.max(20,9+label.length*4.9);
+   stroke(xx,bottom,xx,bottom+ph,[0.43,0.62,0.79],.7,true);
+   const label=String(idx); // Numéro seul, sans dièse.
+   const labelW=label.length*3.6;
    const bx=Math.min(left+pw-labelW,Math.max(left,xx-labelW/2));
    let lane=lanes.findIndex(last=>bx>last+4);
-   if(lane<0) lane=lanes.indexOf(Math.min(...lanes));
-   const by=y+50-lane*13;
-   // Petit trait connecteur : le numéro reste lié au bon changement de BB.
-   stroke(xx,bottom,bx+labelW/2,by+9,[0.43,0.62,0.79],.6);
-   rect(bx,by-2,labelW,12,[0.84,0.91,0.97]);
-   tx(label,bx+3.5,by+1,8,[0.10,0.28,0.46],true);
+   if(lane<0)lane=lanes.indexOf(Math.min(...lanes));
+   // Pas de fond ni de caractère # : texte petit et gris au pied du pointillé.
+   tx(label,bx,y+49-lane*11,7,[0.49,0.55,0.61]);
    lanes[lane]=bx+labelW;
   }
   out.push(`${rgb(BLUE)} RG 1.5 w [] 0 d`);
@@ -1391,7 +1394,7 @@ function pdfReport(s,st){
  metric(391,696,167,'Mains jouées (%)',st.percent===null?'—':fmt1(st.percent)+' %',GREEN);
  section('ÉVOLUTION DU STACK EN BB',619);
  plot(st.points,37,345,521,257,'bb');
- tx('Echelle ln(1+BB) - Traits verticaux : #main du changement de BB (sous le trait)',39,336,8,MUTED);
+ tx('Echelle ln(1+BB) - Traits verticaux : changements de BB (numéros des mains en dessous)',39,336,8,MUTED);
  section('GAINS ET PERTES - MAINS JOUÉES',307);
  metric(37,280,167,'Gain moyen',st.averageGain===null?'—':'+'+fmt1(st.averageGain)+' BB',GREEN);
  metric(214,280,167,'Perte moyenne',st.averageLoss===null?'—':'-'+fmt1(st.averageLoss)+' BB',RED);
