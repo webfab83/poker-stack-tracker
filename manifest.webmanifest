@@ -1,26 +1,31 @@
 {
-  "name": "STACK",
+  "name": "STACK - Suivi de stack au poker",
   "short_name": "STACK",
+  "description": "Suivi des stacks, statistiques et bilans PDF de tournoi de poker.",
+  "id": "./",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#071321",
-  "theme_color": "#071321",
+  "background_color": "#09111d",
+  "theme_color": "#0b1420",
   "icons": [
     {
-      "src": "./icons/icon-192.png",
+      "src": "./icons/icon-192-v19.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "./icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "./icons/icon-maskable-512.png",
+      "src": "./icons/icon-512-v19.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512-v19.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

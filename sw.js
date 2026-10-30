@@ -1,9 +1,9 @@
 /* Pas de données personnelles dans le cache du service worker. */
-const CACHE_NAME = 'stack-poker-pwa-v18-sans-labels-droite-20261030';
+const CACHE_NAME = 'stack-poker-pwa-v19-logo3-pdf-20261030';
 const ASSETS = [
-  './index.html', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png',
-  './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'
+  './index.html', './manifest.webmanifest?v=19',
+  './icons/icon-192-v19.png', './icons/icon-512-v19.png',
+  './icons/icon-maskable-512-v19.png', './icons/apple-touch-icon-v19.png'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
