@@ -1,5 +1,5 @@
 /* Pas de données personnelles dans le cache du service worker. */
-const CACHE_NAME = 'stack-poker-pwa-v20-android-id-compatible-20261030';
+const CACHE_NAME = 'stack-poker-pwa-v21-navigation-mains-20261030';
 const ASSETS = [
   './index.html', './manifest.webmanifest?v=19',
   './icons/icon-192-v19.png', './icons/icon-512-v19.png',

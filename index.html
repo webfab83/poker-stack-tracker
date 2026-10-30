@@ -182,6 +182,40 @@ header{margin-bottom:12px}
 #finishSummary{color:#a7e9d6;font-size:.87rem;line-height:1.45}
 #finishPanel{scroll-margin-top:12px}
 @media(max-width:380px){.finish-fields{grid-template-columns:1fr}.finish-fields .full-row{grid-column:auto}}
+
+/* V21 — Revue des mains : les flèches précédentes/suivantes restent fixées à droite.
+   Seules les informations (stack, BB) se replient sur plusieurs lignes. */
+.selected-hand .selected-main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) max-content;
+  align-items:start;
+  gap:10px;
+}
+.selected-hand .selected-main>div:first-child{min-width:0}
+.selected-hand .selected-values{min-width:0;max-width:100%;flex-wrap:wrap}
+.selected-hand .selected-values strong{min-width:0;overflow-wrap:anywhere;word-break:normal}
+.selected-hand .selected-actions{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:7px;
+  justify-self:end;
+  align-self:start;
+  flex-shrink:0;
+  margin:0;
+}
+.selected-hand .selected-actions button{
+  flex:0 0 43px;
+  width:43px;
+  height:43px;
+  padding:0;
+  display:grid;
+  place-items:center;
+}
+@media(max-width:365px){
+  .selected-hand .selected-main{gap:7px}
+  .selected-hand .selected-actions{gap:6px}
+  .selected-hand .selected-actions button{flex-basis:41px;width:41px;height:43px;min-width:41px}
+}
 </style>
 </head>
 <body>
