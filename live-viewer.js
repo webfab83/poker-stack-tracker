@@ -5,10 +5,14 @@
  const $=id=>document.getElementById(id);
  const qs=new URLSearchParams(location.search),token=qs.get('token')||'';
  const validToken=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token);
- const C=window.STACK_LIVE_CONFIG||{};
- const validConfig=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(C.url||'')&&
-   /^(sb_publishable_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/.test(C.publishableKey||'')&&
-   !/REMPLACER|VOTRE/i.test(C.publishableKey);
+ const R=window.STACK_LIVE_CONFIG||{};
+ const C={
+  url:String(R.url||R.supabaseUrl||R.supabase_url||R.NEXT_PUBLIC_SUPABASE_URL||'').trim().replace(/\/+$/,''),
+  publishableKey:String(R.publishableKey||R.publishable_key||R.supabasePublishableKey||R.anonKey||R.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY||'').trim()
+ };
+ const validConfig=/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(C.url)&&
+  /^(sb_publishable_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/.test(C.publishableKey)&&
+  !/REMPLACER|VOTRE/i.test(C.publishableKey);
  const nf=new Intl.NumberFormat('fr-FR');
  const fmt=x=>nf.format(Math.round(Number(x)||0));
  let mode='chips',db=null,latest=null,inFlight=false,reload=false,channel=null,lastGood=0;

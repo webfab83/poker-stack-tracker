@@ -6,10 +6,45 @@
   const $=id=>document.getElementById(id);
   const bridge=window.STACKLiveBridge;
   if(!bridge)return;
-  const C=window.STACK_LIVE_CONFIG||{};
-  const validConfig=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(C.url||'') &&
-    /^(sb_publishable_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/.test(C.publishableKey||'') &&
-    !/REMPLACER|VOTRE/i.test(C.publishableKey);
+  // Le manifeste et l'application peuvent être mis à jour à des moments distincts
+  // par Chrome Android. Relire la configuration évite une erreur figée au démarrage.
+  let C={}, validConfig=false, configError='';
+  function checkConfig(){
+    const raw=window.STACK_LIVE_CONFIG;
+    if(!raw||typeof raw!=='object'){
+      C={};validConfig=false;
+      configError='Connexion absente : live-config.js n\'a pas été exécuté dans STACK. Réessaie avec Internet.';
+      return false;
+    }
+    C={
+      url:String(raw.url||raw.supabaseUrl||raw.supabase_url||raw.NEXT_PUBLIC_SUPABASE_URL||'').trim().replace(/\/+$/,''),
+      publishableKey:String(raw.publishableKey||raw.publishable_key||raw.supabasePublishableKey||raw.anonKey||raw.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY||'').trim()
+    };
+    if(!C.url){configError='URL Supabase introuvable : vérifie le champ url dans live-config.js.';}
+    else if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(C.url)){
+      configError='Adresse Supabase non reconnue : elle doit ressembler à https://projet.supabase.co.';
+    }else if(!C.publishableKey){configError='Clé publique introuvable : vérifie publishableKey dans live-config.js.';}
+    else if(/^sb_secret_|service_role/i.test(C.publishableKey)){
+      configError='Clé secrète refusée : utilise uniquement la clé publique sb_publishable_.';
+    }else if(!/^(sb_publishable_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/.test(C.publishableKey)||/REMPLACER|VOTRE/i.test(C.publishableKey)){
+      configError='Format de la clé publique non reconnu : recopie uniquement la valeur sb_publishable_.';
+    }else{configError='';validConfig=true;return true;}
+    validConfig=false;return false;
+  }
+  let configReloadPromise=null;
+  function reloadConfig(){
+    if(configReloadPromise)return configReloadPromise;
+    configReloadPromise=new Promise(resolve=>{
+      const script=document.createElement('script');
+      // URL unique pour contourner l'ancienne version conservée par Chrome/PWA.
+      script.src='./live-config.js?stack-config-refresh='+Date.now();
+      script.onload=()=>{checkConfig();updateControls();resolve(validConfig)};
+      script.onerror=()=>{configError='Fichier live-config.js inaccessible : vérifie sa présence à la racine de GitHub.';setStatus(configError,true);resolve(false)};
+      document.head.appendChild(script);
+    }).finally(()=>{configReloadPromise=null});
+    return configReloadPromise;
+  }
+  checkConfig();
   const storeKey='poker-stack-live-v24-map';
   let db=null, sdkPromise=null, syncTimer=null, busy=false, dirty=false;
   let liveMap={};
@@ -18,9 +53,10 @@
   const entry=()=>liveMap[bridge.currentId()]||null;
   const setStatus=(txt,bad=false)=>{const el=$('liveStatus');if(!el)return;el.textContent=txt;el.classList.toggle('live-error',bad)};
   const viewerUrl=token=>new URL('./live.html?token='+encodeURIComponent(token),location.href).href;
-  const configMessage='Configuration nécessaire : crée ton projet Supabase, exécute stack-live.sql, puis remplis live-config.js.';
+  const configMessage=()=>configError||'Configuration Supabase à vérifier.';
   function ensureSdk(){
-    if(!validConfig)return Promise.reject(Error(configMessage));
+    checkConfig();
+    if(!validConfig)return Promise.reject(Error(configMessage()));
     if(db)return Promise.resolve(db);
     if(sdkPromise)return sdkPromise;
     sdkPromise=new Promise((resolve,reject)=>{
@@ -43,6 +79,7 @@
     return data.user.id;
   }
   function updateControls(){
+    checkConfig();
     const e=entry(),active=!!e?.active;
     $('liveStart').hidden=active;
     $('liveStop').hidden=!active;
@@ -51,7 +88,7 @@
     $('liveLinkWrap').hidden=!active;
     $('liveLink').value=active?viewerUrl(e.token):'';
     $('liveLabel').textContent=active?'🔴 Direct activé':'Direct inactif';
-    if(!validConfig)setStatus(configMessage,true);
+    if(!validConfig)setStatus(configMessage(),true);
     else if(!navigator.onLine&&active)setStatus('Hors ligne : le partage reprendra après reconnexion.',true);
     else if(active)setStatus('Lien actif. Les modifications seront envoyées automatiquement.');
     else setStatus('Active le direct pour créer un lien privé à partager.');
@@ -85,7 +122,7 @@
     finally{busy=false}
   }
   async function start(){
-    if(!validConfig){setStatus(configMessage,true);return}
+    if(!checkConfig()&&!(await reloadConfig())){setStatus(configMessage(),true);return}
     if(!navigator.onLine){setStatus('Connecte le téléphone à Internet pour activer le direct.',true);return}
     if(!window.crypto?.randomUUID){setStatus('HTTPS requis pour créer un lien sécurisé.',true);return}
     const btn=$('liveStart');btn.disabled=true;setStatus('Création du partage…');
@@ -142,6 +179,8 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateControls();queueSync()}});
   setInterval(()=>{if(navigator.onLine&&dirty)flush()},12000);
   updateControls();
+  // Recharger la configuration fraîche une fois si l'ancienne n'est pas valide.
+  if(!validConfig)reloadConfig();
   // Reprise après fermeture/rechargement : republier le snapshot local le plus récent.
   if(entry()?.active)queueSync();
 })();
