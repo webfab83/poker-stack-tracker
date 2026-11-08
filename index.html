@@ -222,7 +222,7 @@ header{margin-bottom:12px}
 /* V24 — partage en direct, indépendant de la saisie des mains. */
 .sr-only{left:0;clip-path:inset(50%)}
 [hidden]{display:none!important}
-/* V24.3 — joueurs restants / total, visible sur téléphone et éditable par tournoi. */
+/* V24.4 — joueurs restants / total et éliminations rapides −1 / −X. */
 .players-tracker{margin-top:12px;border:1px solid #32516a;background:#0d2130;border-radius:13px;padding:11px 12px}
 .players-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .players-bar-title{font-size:.79rem;color:var(--sub);font-weight:700;letter-spacing:.15px}
@@ -232,6 +232,19 @@ header{margin-bottom:12px}
 .players-inputs label{font-size:.78rem}
 .players-inputs input{min-width:0;min-height:45px;padding:9px;font-variant-numeric:tabular-nums}
 .players-save{margin-top:10px;min-height:43px;width:100%}
+/* V24.4 : éliminations rapides, sans toucher aux mains ni au total de départ. */
+.players-quickbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-top:11px}
+.players-quickbar button{flex:0 0 auto;min-height:44px;min-width:66px;padding:8px 14px;font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;border-radius:11px;border:1px solid #49717e;background:#143a42;color:#a4f9e0;cursor:pointer}
+.players-quickbar button:active{transform:scale(.98)}
+.players-quickbar button:disabled{opacity:.46;cursor:default}
+.players-quickbar .players-quick-label{flex:1;min-width:0;color:var(--sub);font-size:.76rem;line-height:1.3;text-align:right}
+.players-batch-form{margin-top:10px;padding:10px;background:#122c3c;border:1px solid #345c72;border-radius:10px}
+.players-batch-form label{font-size:.78rem;color:var(--sub);display:block;margin-bottom:6px}
+.players-batch-controls{display:flex;align-items:center;gap:8px}
+.players-batch-controls input{width:88px;min-width:0;min-height:44px;padding:8px;font-size:1rem;flex:0 0 88px;font-variant-numeric:tabular-nums}
+.players-batch-controls button{min-height:44px;flex:1;min-width:0;padding:7px 8px;font-weight:750}
+.players-batch-controls .players-cancel{flex:0 0 auto}
+@media(max-width:360px){.players-quickbar button{min-width:60px;padding:8px 10px}.players-batch-controls input{flex-basis:70px;width:70px}.players-batch-controls .players-cancel{padding:8px}}
 @media(max-width:350px){.players-count{font-size:1.16rem}.players-tracker{padding:9px}}
 #livePanel{scroll-margin-top:15px}
 .live-status{margin:10px 0;padding:9px 11px;background:#102c35;border:1px solid #2a5a60;border-radius:10px;color:#9df0d5;font-size:.79rem;line-height:1.55}
@@ -243,7 +256,7 @@ header{margin-bottom:12px}
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.3</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.4</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -294,6 +307,19 @@ header{margin-bottom:12px}
     <div><div class="players-bar-title">👥 Joueurs restants / total</div><div id="playersCountDisplay" class="players-count" aria-live="polite">— / —</div></div>
     <button type="button" id="playersEditToggle" class="link-btn" aria-controls="playersForm" aria-expanded="false">✎ Modifier</button>
   </div>
+  <div class="players-quickbar" role="group" aria-label="Éliminations rapides">
+    <button type="button" id="playersMinusOne" aria-label="Retirer un joueur restant">−1</button>
+    <button type="button" id="playersMinusMany" aria-controls="playersBatchForm" aria-expanded="false" aria-label="Retirer plusieurs joueurs restants">−X</button>
+    <span class="players-quick-label">Éliminations rapides</span>
+  </div>
+  <form id="playersBatchForm" class="players-batch-form" hidden aria-label="Retirer plusieurs joueurs">
+    <label for="playersBatchInput">Combien de joueurs éliminés ?</label>
+    <div class="players-batch-controls">
+      <input id="playersBatchInput" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 5" required>
+      <button type="submit" class="mini-btn">Valider −X</button>
+      <button type="button" id="playersBatchCancel" class="ghost players-cancel">Annuler</button>
+    </div>
+  </form>
   <form id="playersForm" hidden aria-label="Actualiser le nombre de joueurs">
     <div class="players-inputs" style="margin-top:11px">
       <div><label for="playersRemainingInput">Restants</label><input id="playersRemainingInput" type="number" inputmode="numeric" min="0" step="1" placeholder="Ex. 23"></div>
@@ -484,12 +510,66 @@ function renderPlayers(){
  if(playersShownSessionId!==s.id){
   playersShownSessionId=s.id;$('playersForm').hidden=true;
   $('playersEditToggle').setAttribute('aria-expanded','false');
+  $('playersBatchForm').hidden=true;
+  $('playersMinusMany').setAttribute('aria-expanded','false');
  }
  $('playersCountDisplay').textContent=(remaining===null?'—':fmt(remaining))+' / '+(all===null?'—':fmt(all));
+ $('playersMinusOne').disabled=remaining===0;
+ $('playersMinusMany').disabled=remaining===0;
+ $('playersBatchInput').max=remaining===null?'':String(remaining);
  if(document.activeElement!==$('playersRemainingInput'))$('playersRemainingInput').value=remaining===null?'':remaining;
  if(document.activeElement!==$('playersTotalInput'))$('playersTotalInput').value=all===null?'':all;
 }
+// Raccourcis : l'état local et la publication Supabase passent par save().
+function hidePlayersBatch(){
+ $('playersBatchForm').hidden=true;
+ $('playersMinusMany').setAttribute('aria-expanded','false');
+ $('playersBatchInput').value='';
+}
+function showPlayersEditor(){
+ hidePlayersBatch();
+ $('playersForm').hidden=false;
+ $('playersEditToggle').setAttribute('aria-expanded','true');
+ renderPlayers();
+ $('playersRemainingInput').focus();
+}
+function removePlayers(n){
+ const s=current(),remaining=playersRemaining(s),all=playersTotal(s);
+ if(remaining===null||all===null){
+  toast('Renseigne d’abord le nombre de joueurs via Modifier');
+  showPlayersEditor();return false;
+ }
+ if(!Number.isSafeInteger(n)||n<1){toast('Indique un nombre de joueurs valide');return false;}
+ if(n>remaining){toast('Il ne reste que '+fmt(remaining)+' joueur'+(remaining>1?'s':''));return false;}
+ s.playersRemaining=remaining-n;
+ hidePlayersBatch();
+ $('playersForm').hidden=true;
+ $('playersEditToggle').setAttribute('aria-expanded','false');
+ save();renderPlayers();clearSharePreview();
+ toast('−'+fmt(n)+' joueur'+(n>1?'s':'')+' · '+fmt(s.playersRemaining)+' / '+fmt(all)+(n>1?'':'') );
+ return true;
+}
+$('playersMinusOne').addEventListener('click',()=>removePlayers(1));
+$('playersMinusMany').addEventListener('click',()=>{
+ const remaining=playersRemaining(current()),all=playersTotal(current());
+ if(remaining===null||all===null){showPlayersEditor();toast('Renseigne d’abord les joueurs restants / total');return;}
+ if(remaining===0){toast('Aucun joueur restant');return;}
+ const form=$('playersBatchForm');
+ if(!form.hidden){hidePlayersBatch();return;}
+ $('playersForm').hidden=true;
+ $('playersEditToggle').setAttribute('aria-expanded','false');
+ form.hidden=false;
+ $('playersMinusMany').setAttribute('aria-expanded','true');
+ $('playersBatchInput').focus();
+});
+$('playersBatchCancel').addEventListener('click',hidePlayersBatch);
+$('playersBatchForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const raw=$('playersBatchInput').value.trim(),n=raw===''?NaN:cleanInt(raw);
+ removePlayers(n);
+});
 $('playersEditToggle').addEventListener('click',()=>{
+ hidePlayersBatch();
  const form=$('playersForm');form.hidden=!form.hidden;
  $('playersEditToggle').setAttribute('aria-expanded',String(!form.hidden));
  if(!form.hidden){renderPlayers();$('playersRemainingInput').focus();}
@@ -506,7 +586,7 @@ $('playersForm').addEventListener('submit',e=>{
  }
  const s=current();s.playersTotal=all;s.shareEntrants=all;s.playersRemaining=remaining;
  $('shareEntrants').value=all===null?'':all;
- save();renderPlayers();clearSharePreview();
+ hidePlayersBatch();save();renderPlayers();clearSharePreview();
  $('playersForm').hidden=true;$('playersEditToggle').setAttribute('aria-expanded','false');
  toast('Joueurs mis à jour'+(all!==null?' · direct synchronisé si activé':''));
 });
