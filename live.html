@@ -32,6 +32,11 @@ h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{
 @media(max-width:365px){main{padding:13px 9px 35px}.card{padding:13px}.metric{padding:8px}.metric strong{font-size:.95rem}.hero{font-size:2.4rem}}
 @media(min-width:650px){canvas{height:320px}}
 
+/* V24.6 — average mise en évidence sur la page spectateur. */
+.avg-live{margin-top:11px;background:linear-gradient(115deg,#123a37,#142b35);border:1px solid #327368;border-radius:13px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.avg-live-label{color:#b7e6d8;font-size:.82rem;font-weight:780}
+.avg-live-value{font-weight:850;font-variant-numeric:tabular-nums;font-size:clamp(1.25rem,6vw,1.6rem);color:#91f3d4;overflow-wrap:anywhere}
+.avg-live-meta{font-size:.74rem;color:#a8c9c1;margin-top:2px;text-align:right}
 /* V24.5 — véritable bilan final, sans publication des notes privées. */
 .final-card{background:linear-gradient(155deg,#24364a,#162638);border-color:#796b4e}
 .final-card[hidden]{display:none}
@@ -47,7 +52,7 @@ h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{
 </head>
 <body>
 <main>
-<header><img src="./icons/icon-192-v19.png" alt=""><div><strong>STACK<span style="color:var(--cyan)">.</span></strong><span>Suivi du tournoi — vue spectateur · V24.5</span></div></header>
+<header><img src="./icons/icon-192-v19.png" alt=""><div><strong>STACK<span style="color:var(--cyan)">.</span></strong><span>Suivi du tournoi — vue spectateur · V24.6</span></div></header>
 <div id="statusMsg" role="status" aria-live="polite">Connexion au tournoi…</div>
 <div id="tournoi" hidden>
   <section class="card final-card" id="finalPanel" hidden aria-labelledby="finalTitle">
@@ -68,6 +73,10 @@ h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{
     <h1 id="liveName">Tournoi</h1>
     <div class="hero"><span id="liveStack">—</span> <span class="unit">jetons</span></div>
     <div class="players-live-banner" id="livePlayersRow" hidden><span>👥 Joueurs restants / total</span><strong id="livePlayers">— / —</strong></div>
+    <div class="avg-live" aria-label="Stack moyen du tournoi">
+      <span class="avg-live-label">Ø Average · Stack moyen</span>
+      <div style="text-align:right;min-width:0"><div class="avg-live-value" id="liveAverage" aria-live="polite">—</div><div class="avg-live-meta" id="liveAverageBB"></div></div>
+    </div>
     <div class="grid">
       <div class="metric"><span>Profondeur</span><strong id="liveBB">— BB</strong></div>
       <div class="metric"><span>Blindes</span><strong id="liveBlinds">— / —</strong></div>
@@ -96,6 +105,6 @@ h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{
 <div class="foot">Consultation seule · Aucun compte nécessaire · <a href="./">Ouvrir STACK</a></div>
 </main>
 <script src="./live-config.js?stack=24.1"></script>
-<script src="./live-viewer.js?stack=24.5"></script>
+<script src="./live-viewer.js?stack=24.6"></script>
 </body>
 </html>

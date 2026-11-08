@@ -114,6 +114,16 @@
   const playersRemaining=Number.isSafeInteger(s.playersRemaining)&&s.playersRemaining>=0?s.playersRemaining:null;
   $('livePlayersRow').hidden=(playersTotal===null&&playersRemaining===null);
   $('livePlayers').textContent=(playersRemaining===null?'—':fmt(playersRemaining))+' / '+(playersTotal===null?'—':fmt(playersTotal));
+  // Average provenant de STACK, avec repli pour les anciennes versions du partage.
+  const average=Number.isFinite(s.averageChips)&&s.averageChips>0?s.averageChips:
+    (playersRemaining!==null&&playersRemaining>0
+      ?(Number.isSafeInteger(s.totalChips)&&s.totalChips>0?s.totalChips:
+         (playersTotal!==null&&Number.isFinite(s.start)?s.start*playersTotal:null))/playersRemaining:null);
+  const validAverage=Number.isFinite(average)&&average>0;
+  $('liveAverage').textContent=validAverage?fmt(average)+' jetons':'—';
+  $('liveAverageBB').textContent=validAverage
+    ?(average/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB · '+fmt(playersRemaining)+' joueurs restants'
+    :(playersRemaining===0?'Tournoi terminé · aucun joueur restant':'En attente des joueurs restants');
   const delta=s.stack-s.start;
   $('liveDiff').textContent=(delta>=0?'+':'')+fmt(delta);
   $('liveDiff').className=delta>0?'green':'';

@@ -1,5 +1,5 @@
 /* STACK V24.5 : cache isolé. Les tournois restent dans localStorage, jamais dans le cache. */
-const CACHE_NAME = 'stack-poker-pwa-v24-5-final-result-20261108';
+const CACHE_NAME = 'stack-poker-pwa-v24-6-average-20261108';
 const INDEX_URL = './index.html';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME)

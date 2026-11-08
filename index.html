@@ -222,6 +222,22 @@ header{margin-bottom:12px}
 /* V24 — partage en direct, indépendant de la saisie des mains. */
 .sr-only{left:0;clip-path:inset(50%)}
 [hidden]{display:none!important}
+/* V24.6 — average visible ; correction du total de jetons derrière un bouton discret. */
+.average-bar{margin-top:12px;padding:12px 13px;border:1px solid #286c66;background:linear-gradient(130deg,#123d3a,#102b35);border-radius:13px}
+.average-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.average-label{font-size:.81rem;font-weight:800;color:#bceee0;letter-spacing:.15px}
+.average-edit{flex:none;border:1px solid transparent;background:transparent;border-radius:9px;color:#a6c1c2;padding:7px 9px;min-height:36px;min-width:36px;font-size:.95rem;opacity:.78;cursor:pointer}
+.average-edit:focus-visible{outline:2px solid #e1fff2;outline-offset:1px}
+.average-edit[aria-expanded=true]{background:#1b4f4b;opacity:1}
+.average-value{font-size:clamp(1.45rem,6vw,1.85rem);line-height:1.25;font-weight:850;letter-spacing:-.3px;color:#97f5d6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.average-value .unit{font-size:.73rem;font-weight:650;letter-spacing:normal}
+.average-details{color:#a7cbc8;font-size:.75rem;margin-top:3px;line-height:1.35;overflow-wrap:anywhere}
+.average-form{margin-top:10px;padding-top:12px;border-top:1px solid #295954}
+.average-form label{font-size:.8rem;margin-bottom:6px}
+.average-form .average-actions{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.average-form .average-actions button{min-height:39px;padding:8px 10px;font-size:.8rem}
+.average-form .average-actions button:first-child{flex:1}
+.average-form p{font-size:.74rem;color:var(--sub);line-height:1.45;margin-top:8px}
 /* V24.4 — joueurs restants / total et éliminations rapides −1 / −X. */
 .players-tracker{margin-top:12px;border:1px solid #32516a;background:#0d2130;border-radius:13px;padding:11px 12px}
 .players-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -256,7 +272,7 @@ header{margin-bottom:12px}
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.5</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.6</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -306,6 +322,18 @@ header{margin-bottom:12px}
   <div class="players-bar">
     <div><div class="players-bar-title">👥 Joueurs restants / total</div><div id="playersCountDisplay" class="players-count" aria-live="polite">— / —</div></div>
     <button type="button" id="playersEditToggle" class="link-btn" aria-controls="playersForm" aria-expanded="false">✎ Modifier</button>
+  </div>
+  <div class="average-bar" aria-label="Tapis moyen du tournoi">
+   <div class="average-top"><span class="average-label">Ø Average · Stack moyen</span>
+    <button id="averageEditToggle" class="average-edit" type="button" aria-label="Ajuster le total des jetons en circulation" title="Ajuster le total des jetons en circulation" aria-expanded="false" aria-controls="averageForm">⚙</button></div>
+   <div id="averageDisplay" class="average-value" aria-live="polite">—</div>
+   <div id="averageDetails" class="average-details">Renseigne les joueurs restants et le total au départ.</div>
+   <form id="averageForm" class="average-form" hidden aria-label="Ajuster le nombre de jetons en circulation">
+    <label for="totalChipsInput">Total des jetons en circulation</label>
+    <input id="totalChipsInput" type="number" inputmode="numeric" min="1" max="9007199254740991" step="1" required placeholder="Ex. 5 400 000">
+    <div class="average-actions"><button type="submit" class="mini-btn">Enregistrer</button><button type="button" id="averageAuto" class="ghost">↺ Auto</button><button type="button" id="averageCancel" class="ghost">Fermer</button></div>
+    <p id="averageHelp">Par défaut : stack initial × participants au départ. L'ajustement est conservé pour ce tournoi.</p>
+   </form>
   </div>
   <div class="players-quickbar" role="group" aria-label="Éliminations rapides">
     <button type="button" id="playersMinusOne" aria-label="Retirer un joueur restant">−1</button>
@@ -491,6 +519,9 @@ function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.se
  s.playersTotal=sourceTotal!==null&&sourceTotal<=1000000?sourceTotal:null;
  s.playersRemaining=Number.isSafeInteger(s.playersRemaining)&&s.playersRemaining>=0&&
   s.playersTotal!==null&&s.playersRemaining<=s.playersTotal?s.playersRemaining:null;
+ // V24.6 : option facultative par tournoi. Ne jamais supprimer les anciennes sauvegardes.
+ s.totalChipsOverride=Number.isSafeInteger(s.totalChipsOverride)&&s.totalChipsOverride>0
+   ?s.totalChipsOverride:null;
  if(s.blindMode!=='preset')s.blindMode='manual';if(!Number.isSafeInteger(s.tableSize)||s.tableSize<2||s.tableSize>10)s.tableSize=10;
 if(!Array.isArray(s.blindLevels))s.blindLevels=[];
 s.blindLevels=s.blindLevels.filter(l=>l&&Number.isSafeInteger(l.sb)&&l.sb>=0&&Number.isSafeInteger(l.bb)&&l.bb>0&&l.sb<=l.bb&&Number.isSafeInteger(l.ante)&&l.ante>=0).slice(0,120).map(l=>({sb:l.sb,bb:l.bb,ante:l.ante}));
@@ -505,22 +536,69 @@ function playersTotal(s){return Number.isSafeInteger(s.playersTotal)&&s.playersT
  (Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0?s.shareEntrants:
  (Number.isSafeInteger(s.result?.players)&&s.result.players>0?s.result.players:null));}
 function playersRemaining(s){return Number.isSafeInteger(s.playersRemaining)&&s.playersRemaining>=0?s.playersRemaining:null;}
+// L'average est basé sur TOUS les jetons en circulation, pas sur le seul stack suivi.
+function automaticTotalChips(s){
+ const n=playersTotal(s),chips=n===null?NaN:s.startStack*n;
+ return Number.isSafeInteger(chips)&&chips>0?chips:null;
+}
+function tournamentTotalChips(s){
+ return Number.isSafeInteger(s.totalChipsOverride)&&s.totalChipsOverride>0?s.totalChipsOverride:automaticTotalChips(s);
+}
+function tournamentAverage(s){
+ const chips=tournamentTotalChips(s),remaining=playersRemaining(s);
+ return chips!==null&&remaining!==null&&remaining>0?chips/remaining:null;
+}
 let playersShownSessionId=null;
 function renderPlayers(){
  const s=current(),remaining=playersRemaining(s),all=playersTotal(s);
  if(playersShownSessionId!==s.id){
   playersShownSessionId=s.id;$('playersForm').hidden=true;
+  $('averageForm').hidden=true;$('averageEditToggle').setAttribute('aria-expanded','false');
   $('playersEditToggle').setAttribute('aria-expanded','false');
   $('playersBatchForm').hidden=true;
   $('playersMinusMany').setAttribute('aria-expanded','false');
  }
  $('playersCountDisplay').textContent=(remaining===null?'—':fmt(remaining))+' / '+(all===null?'—':fmt(all));
+ const chips=tournamentTotalChips(s),avg=tournamentAverage(s),adjusted=Number.isSafeInteger(s.totalChipsOverride)&&s.totalChipsOverride>0;
+ $('averageDisplay').textContent=avg===null?'—':fmt(Math.round(avg))+' jetons';
+ $('averageDetails').textContent=chips===null
+  ?'Renseigne le nombre de participants pour calculer l’average.'
+  :remaining===0?'Aucun joueur restant · '+fmt(chips)+' jetons au total'
+  :remaining===null?'Renseigne les joueurs restants · '+fmt(chips)+' jetons au total'
+  :(avg/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB · '+(adjusted?'Total ajusté : ':'Total estimé : ')+fmt(chips)+' jetons';
+ if(document.activeElement!==$('totalChipsInput'))$('totalChipsInput').value=chips===null?'':String(chips);
+ $('averageHelp').textContent=adjusted
+  ?'Total ajusté manuellement pour ce tournoi. « Auto » revient au calcul stack initial × participants.'
+  :'Calcul automatique : stack initial × participants au départ. À modifier seulement si le nombre de jetons en circulation est différent.';
  $('playersMinusOne').disabled=remaining===0;
  $('playersMinusMany').disabled=remaining===0;
  $('playersBatchInput').max=remaining===null?'':String(remaining);
  if(document.activeElement!==$('playersRemainingInput'))$('playersRemainingInput').value=remaining===null?'':remaining;
  if(document.activeElement!==$('playersTotalInput'))$('playersTotalInput').value=all===null?'':all;
 }
+$('averageEditToggle').addEventListener('click',()=>{
+ const form=$('averageForm');form.hidden=!form.hidden;
+ $('averageEditToggle').setAttribute('aria-expanded',String(!form.hidden));
+ if(!form.hidden){renderPlayers();$('totalChipsInput').focus();}
+});
+$('averageCancel').addEventListener('click',()=>{
+ $('averageForm').hidden=true;$('averageEditToggle').setAttribute('aria-expanded','false');
+});
+$('averageAuto').addEventListener('click',()=>{
+ const s=current();s.totalChipsOverride=null;
+ save();renderPlayers();clearSharePreview();
+ $('averageForm').hidden=true;$('averageEditToggle').setAttribute('aria-expanded','false');
+ toast('Total des jetons : calcul automatique');
+});
+$('averageForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const value=$('totalChipsInput').value.trim(),n=value===''?NaN:cleanInt(value);
+ if(!Number.isSafeInteger(n)||n<=0){toast('Indique un total de jetons entier et positif');return;}
+ const s=current();s.totalChipsOverride=n;
+ save();renderPlayers();clearSharePreview();
+ $('averageForm').hidden=true;$('averageEditToggle').setAttribute('aria-expanded','false');
+ toast('Total des jetons ajusté · average actualisée');
+});
 // Raccourcis : l'état local et la publication Supabase passent par save().
 function hidePlayersBatch(){
  $('playersBatchForm').hidden=true;
@@ -1780,6 +1858,7 @@ window.STACKLiveBridge={
   return {name:s.name.slice(0,80),start:s.startStack,stack:total(s),sb:s.sb,bb:s.bb,
    ante:s.ante,anteMode:s.anteMode,hands:count,played:playedHands(s),
    finished:!!result,playersRemaining:playersRemaining(s),playersTotal:totalPlayers,
+   averageChips:tournamentAverage(s),totalChips:tournamentTotalChips(s),
    finalStatus:result?result.status:null,
    finalRank:result&&Number.isSafeInteger(result.rank)&&result.rank>0?result.rank:null,
    finalPlayers:result?rankedPlayers:null,finishedAt:result?finishDate:null,
