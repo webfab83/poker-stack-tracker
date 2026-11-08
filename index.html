@@ -218,11 +218,20 @@ header{margin-bottom:12px}
 .blind-propagation-label{display:flex;align-items:flex-start;gap:10px;line-height:1.4;margin:0 0 7px;cursor:pointer;color:#f1fbff}
 .blind-propagation-label input{flex:0 0 22px;width:22px;min-width:22px;height:22px;min-height:22px;padding:0;margin:0;accent-color:var(--green)}
 .blind-propagation p{margin-top:6px;line-height:1.45}
+
+/* V24 — partage en direct, indépendant de la saisie des mains. */
+.sr-only{left:0;clip-path:inset(50%)}
+#livePanel{scroll-margin-top:15px}
+.live-status{margin:10px 0;padding:9px 11px;background:#102c35;border:1px solid #2a5a60;border-radius:10px;color:#9df0d5;font-size:.79rem;line-height:1.55}
+.live-status.live-error{color:#ffb6b8;background:#342329;border-color:#6e4352}
+#liveStart[hidden],#liveStop[hidden],#liveCopy[hidden],#liveShare[hidden],#liveLinkWrap[hidden]{display:none!important}
+#liveShortcut{padding:8px 10px;font-size:.82rem}
+@media(max-width:440px){#chartTitle{font-size:1rem}.panel-head .row{gap:5px!important}#shareToggle,#liveShortcut{font-size:.73rem;padding:8px 8px}#rangeLabel{display:none}}
 </style>
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V23</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -329,7 +338,7 @@ header{margin-bottom:12px}
  </div>
 </section>
 <section class="panel" aria-labelledby="chartTitle">
- <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><div class="row" style="gap:7px"><span class="small" id="rangeLabel">Depuis le départ</span><button class="ghost" type="button" id="shareToggle" aria-expanded="false" aria-controls="sharePanel">↗ Partager</button></div></div>
+ <div class="panel-head"><h2 id="chartTitle">Évolution du stack</h2><div class="row" style="gap:7px"><span class="small" id="rangeLabel">Depuis le départ</span><button class="ghost" type="button" id="shareToggle" aria-expanded="false" aria-controls="sharePanel">↗ Partager</button><button class="ghost" type="button" id="liveShortcut" aria-controls="livePanel">🔴 Direct</button></div></div>
  <div class="chart-controls"><div class="chart-switch" role="group" aria-label="Unité du graphique"><button type="button" id="graphChips" aria-pressed="true">Jetons</button><button type="button" id="graphBB" aria-pressed="false">BB</button></div></div>
  <div class="chart-subcontrols"><div class="scale-switch" id="bbScaleGroup" role="group" aria-label="Échelle du graphique en BB" hidden><button type="button" id="scaleLinear" aria-pressed="false">Linéaire</button><button type="button" id="scaleLog" aria-pressed="true">Paliers BB</button></div>
   <div class="zoom-tools" role="group" aria-label="Zoom horizontal de la courbe"><button type="button" id="zoomOut" aria-label="Dézoomer">−</button><span id="zoomReadout" aria-live="polite">×1</span><button type="button" id="zoomIn" aria-label="Zoomer">＋</button><button type="button" id="zoomReset">Tout voir</button></div>
@@ -361,6 +370,20 @@ header{margin-bottom:12px}
   <button class="ghost" type="button" id="saveImageBtn">⇩ PNG</button>
  </div>
  <div id="sharePreviewArea" class="share-preview" hidden><img id="sharePreview" alt="Aperçu de la carte illustrée de ton tournoi, avec statistiques et graphique"></div>
+ <div class="divider" style="margin-top:22px"></div>
+ <section id="livePanel" aria-label="Partage du tournoi en direct">
+   <div class="panel-head"><h2>🔴 Partager en direct</h2><span class="pill-soft" id="liveLabel">Direct inactif</span></div>
+   <p class="small" style="line-height:1.55">Crée un lien unique : tes amis suivent le stack, les blindes et la courbe automatiquement. <b>Les notes de tes mains restent privées.</b></p>
+   <p class="live-status" id="liveStatus" role="status" aria-live="polite">Initialisation…</p>
+   <div id="liveLinkWrap" hidden class="input-wrap"><label for="liveLink">Lien spectateur (lecture seule)</label><input id="liveLink" readonly aria-label="Lien à envoyer aux spectateurs"></div>
+   <div class="share-actions">
+     <button class="action gain" id="liveStart" type="button" style="min-height:47px">● Activer le direct</button>
+     <button class="mini-btn" id="liveCopy" type="button" hidden>⧉ Copier le lien</button>
+     <button class="mini-btn" id="liveShare" type="button" hidden>↗ Envoyer</button>
+     <button class="ghost" id="liveStop" type="button" hidden>■ Arrêter le partage</button>
+   </div>
+   <p class="small" style="margin-top:9px">Nécessite une connexion Internet et la configuration Supabase (fichier <code>live-config.js</code>). STACK continue de fonctionner hors connexion.</p>
+ </section>
  <div class="share-hint">L'image contient tes statistiques et ta courbe, sans les notes de tes mains. Les champs facultatifs sont enregistrés avec ton tournoi.</div>
 </section>
 <section class="panel" aria-labelledby="historyTitle">
@@ -416,7 +439,7 @@ if(!Number.isSafeInteger(s.levelIndex)||s.levelIndex<0||s.levelIndex>=s.blindLev
 if(!Number.isSafeInteger(s.initialBB)||s.initialBB<=0)s.initialBB=(s.hands.length&&Number.isSafeInteger(s.hands[0].bb)&&s.hands[0].bb>0)?s.hands[0].bb:s.bb;if(s.ante===undefined)s.ante=0;if(s.anteMode===undefined)s.anteMode='bba';if(!Number.isSafeInteger(s.ante)||s.ante<0||!['bba','each'].includes(s.anteMode))throw Error('Ante invalide');if(!Number.isSafeInteger(s.sb)||s.sb<0||s.sb>s.bb)throw Error('Petite blinde invalide');let stack=s.startStack;for(const h of s.hands){if(!Number.isSafeInteger(h.delta)||typeof h.id!=='string')throw Error('Historique invalide');if(h.note===undefined)h.note='';if(typeof h.note!=='string'||h.note.length>2000)throw Error('Note invalide');stack+=h.delta;if(!Number.isSafeInteger(stack)||stack<0)throw Error('Stack négatif dans la sauvegarde')}}if(!d.sessions.some(s=>s.id===d.activeId))d.activeId=d.sessions[0].id;return d}
 let graphMode='chips';try{graphMode=localStorage.getItem(GRAPH_KEY)==='bb'?'bb':'chips'}catch(e){}
 let data;try{const saved=localStorage.getItem(KEY);data=saved?validate(JSON.parse(saved)):sample()}catch(e){data=sample();localOK=false}if(!localOK)$('storageWarning').style.display='block';
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localOK=true;$('storageWarning').style.display='none'}catch(e){localOK=false;$('storageWarning').style.display='block'}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localOK=true;$('storageWarning').style.display='none'}catch(e){localOK=false;$('storageWarning').style.display='block'} window.dispatchEvent(new Event('stack:changed'));}
 function current(){return data.sessions.find(s=>s.id===data.activeId)||data.sessions[0]}
 function total(s){return s.hands.reduce((a,h)=>a+h.delta,s.startStack)}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('on'),2800)}
@@ -1583,12 +1606,30 @@ $('reportDownload').addEventListener('click',()=>{
  }catch(err){console.error(err);toast('Erreur de création du PDF : '+err.message)}
 });
 
+// Interface publique limitée pour V24 : ne publie ni notes, ni résultats détaillés.
+window.STACKLiveBridge={
+ currentId:()=>current().id,
+ snapshot:()=>{
+  const s=current(),points=buildPoints(s),count=s.hands.length;
+  const maxPoints=1700,step=Math.max(1,Math.ceil(count/(maxPoints-1)));
+  const filtered=[];
+  for(let i=0;i<points.length;i++)if(i===0||i===points.length-1||i%step===0){
+    const p=points[i];filtered.push([i,p.chips,p.blind]);
+  }
+  // Valeurs volontairement filtrées pour les spectateurs. Les mains et notes ne partent jamais.
+  return {name:s.name.slice(0,80),start:s.startStack,stack:total(s),sb:s.sb,bb:s.bb,
+   ante:s.ante,anteMode:s.anteMode,hands:count,played:playedHands(s),
+   finished:!!s.result,points:filtered};
+ }
+};
 save();render();setBBScale(bbScale);setGraphMode(graphMode);
 })();
 </script>
 
+<script src="./live-config.js"></script>
+<script src="./live.js"></script>
 <script>
-/* Installation PWA ; les tournois ne sont jamais envoyés vers un serveur. */
+/* Installation PWA ; stockage local, sauf partage en direct explicitement activé. */
 (function(){
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', function(){

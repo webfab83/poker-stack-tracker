@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0b1420">
+<title>STACK — Tournoi en direct</title>
+<link rel="icon" href="./icons/icon-192-v19.png" type="image/png">
+<style>
+:root{color-scheme:dark;--bg:#09111d;--panel:#132438;--text:#eff7ff;--muted:#a2b9cc;--cyan:#48dcb6;--red:#ff9090;--border:#2c455e;--gold:#e6d18e}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#153449,#09111d 62%);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100dvh}
+main{width:min(100%,820px);margin:auto;padding:22px 14px 45px}header{display:flex;align-items:center;gap:12px;margin-bottom:17px}header img{width:48px;height:48px;border-radius:13px}header strong{font-size:1.35rem}header span{display:block;color:var(--muted);font-size:.8rem}
+.card{background:linear-gradient(155deg,#182b41,#112032);border:1px solid var(--border);border-radius:20px;margin:12px 0;padding:18px;box-shadow:0 8px 24px #0003}
+.line{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.pill{border:1px solid #2c766c;color:#81ecd0;background:#123b33;border-radius:20px;padding:5px 11px;font-size:.75rem;font-weight:750}.pill.off{background:#382a2a;border-color:#6f4242;color:#ffb0b0}
+h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{font-size:1.05rem;margin:0 0 12px}.hero{font-size:clamp(2.4rem,10vw,4.25rem);font-weight:850;letter-spacing:-1.5px;line-height:1.1;font-variant-numeric:tabular-nums}.unit{font-size:.9rem;color:var(--muted);font-weight:550;letter-spacing:normal}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:15px}.metric{border:1px solid #253d55;background:#0c1b2a;border-radius:12px;padding:11px;min-width:0}.metric span{display:block;font-size:.77rem;color:var(--muted);margin-bottom:5px}.metric strong{display:block;font-size:1.08rem;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.green{color:var(--cyan)}
+#statusMsg{padding:15px;border-radius:13px;background:#102c39;border:1px solid #345569;color:#dcecf7;line-height:1.55}#statusMsg[hidden],#tournoi[hidden]{display:none}
+.controls{display:inline-flex;padding:3px;gap:3px;border-radius:11px;background:#081627;border:1px solid var(--border)}.controls button{background:none;color:#d3e3ee;padding:8px 15px;border:0;border-radius:9px;font-weight:750}.controls button[aria-pressed=true]{background:var(--cyan);color:#091622}
+.canvasbox{background:#0b1928;border:1px solid #22374e;border-radius:13px;padding:6px;margin-top:11px;overflow:hidden}canvas{display:block;width:100%;height:260px}.small{font-size:.8rem;color:var(--muted);line-height:1.55}.foot{font-size:.75rem;color:#8098ad;text-align:center;margin-top:22px}.foot a{color:#a4d2ff}
+@media(max-width:365px){main{padding:13px 9px 35px}.card{padding:13px}.metric{padding:8px}.metric strong{font-size:.95rem}.hero{font-size:2.4rem}}
+@media(min-width:650px){canvas{height:320px}}
+</style>
+</head>
+<body>
+<main>
+<header><img src="./icons/icon-192-v19.png" alt=""><div><strong>STACK<span style="color:var(--cyan)">.</span></strong><span>Suivi du tournoi — vue spectateur</span></div></header>
+<div id="statusMsg" role="status" aria-live="polite">Connexion au tournoi…</div>
+<div id="tournoi" hidden>
+  <section class="card">
+    <div class="line"><span class="pill" id="liveBadge">● En direct</span><span id="syncTime" class="small">Dernière actualisation —</span></div>
+    <h1 id="liveName">Tournoi</h1>
+    <div class="hero"><span id="liveStack">—</span> <span class="unit">jetons</span></div>
+    <div class="grid">
+      <div class="metric"><span>Profondeur</span><strong id="liveBB">— BB</strong></div>
+      <div class="metric"><span>Blindes</span><strong id="liveBlinds">— / —</strong></div>
+      <div class="metric"><span>Mains suivies</span><strong id="liveHands">—</strong></div>
+    </div>
+    <div class="grid">
+      <div class="metric"><span>Évolution</span><strong id="liveDiff">—</strong></div>
+      <div class="metric"><span>Mains jouées</span><strong id="livePlayed">—</strong></div>
+      <div class="metric"><span>Ante</span><strong id="liveAnte">—</strong></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="line"><h2>Évolution du stack</h2><div class="controls" role="group" aria-label="Unité du graphique"><button id="chipsMode" aria-pressed="true" type="button">Jetons</button><button id="bbMode" aria-pressed="false" type="button">BB</button></div></div>
+    <div class="canvasbox"><canvas id="liveChart" role="img" aria-label="Graphique de l'évolution du stack, automatiquement mis à jour"></canvas></div>
+    <p class="small" style="margin-top:10px">Graphique en temps réel, sans notes ni détails privés des mains. En cas de coupure du réseau, la page se remet à jour à la reconnexion.</p>
+  </section>
+</div>
+<div class="foot">Consultation seule · Aucun compte nécessaire · <a href="./">Ouvrir STACK</a></div>
+</main>
+<script src="./live-config.js"></script>
+<script src="./live-viewer.js"></script>
+</body>
+</html>

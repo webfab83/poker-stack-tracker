@@ -1,5 +1,5 @@
-/* STACK V23 : cache isolé. Les tournois restent dans localStorage, jamais dans le cache. */
-const CACHE_NAME = 'stack-poker-pwa-v23-blind-propagation-20261108';
+/* STACK V24 : cache isolé. Les tournois restent dans localStorage, jamais dans le cache. */
+const CACHE_NAME = 'stack-poker-pwa-v24-live-20261108';
 const INDEX_URL = './index.html';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME)
@@ -17,6 +17,11 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   if (event.request.mode === 'navigate') {
+    // Ne JAMAIS enregistrer live.html comme copie hors ligne de index.html :
+    // sinon le visiteur écraserait le cache local de l'application STACK.
+    const base = new URL(self.registration.scope);
+    const isAppHome = url.pathname === base.pathname || url.pathname === base.pathname + 'index.html';
+    if (!isAppHome) return; // Spectateurs : réseau uniquement.
     event.respondWith(fetch(event.request).then(response => {
       if (response.ok) {
         const copy = response.clone();
