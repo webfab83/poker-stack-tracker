@@ -272,7 +272,7 @@ header{margin-bottom:12px}
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.6</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.7</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -366,13 +366,14 @@ header{margin-bottom:12px}
  <form id="finishForm">
   <div class="finish-fields">
    <div><label for="finishStatus">Résultat</label><select id="finishStatus"><option value="elimine">Éliminé</option><option value="vainqueur">Vainqueur</option><option value="termine">Terminé / autre</option></select></div>
-   <div><label for="finishRank">Place finale (facultative)</label><input id="finishRank" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 23"></div>
-   <div><label for="finishPlayers">Participants (facultatif)</label><input id="finishPlayers" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 320"></div>
+   <div><label for="finishRank">Place finale (pour le bilan PDF)</label><input id="finishRank" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 23"></div>
+   <div><label for="finishPlayers">Participants au départ (pour le bilan PDF)</label><input id="finishPlayers" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 320"></div>
+   <p class="full-row small" style="color:var(--sub);margin:-2px 0 3px">Le classement apparaîtra sur les deux pages du PDF : par exemple <strong>7e / 180</strong>. Il reste modifiable après la clôture.</p>
    <div class="full-row"><label for="finishNote">Bilan personnel (facultatif)</label><textarea id="finishNote" rows="2" maxlength="600" placeholder="Notes générales sur ce tournoi…"></textarea></div>
   </div>
   <div class="finish-actions"><button type="submit" class="action gain" style="min-height:49px">✓ Clôturer le tournoi</button><button type="button" class="ghost" id="finishCancel">Plus tard</button></div>
  </form>
- <div class="finish-actions" style="margin-top:10px"><button type="button" id="reportDownload" class="finish-btn">⇩ Télécharger le bilan PDF (2 pages)</button><button type="button" id="finishReopen" class="ghost">↶ Rouvrir / corriger</button></div>
+ <div class="finish-actions" style="margin-top:10px"><button type="button" id="reportDownload" class="finish-btn">⇩ Télécharger le bilan PDF (2 pages)</button><button type="button" id="finishEditResult" class="ghost" hidden>✎ Corriger place finale</button><button type="button" id="finishReopen" class="ghost">↶ Rouvrir / corriger</button></div>
 </section>
 <section class="panel" aria-labelledby="actionTitle">
  <div class="panel-head"><h2 id="actionTitle">Enregistrer une main</h2><button type="button" class="ghost" style="padding:8px 11px" id="undo">↶ Annuler</button></div>
@@ -1636,12 +1637,16 @@ function renderFinishStatus(s){
  const opened=!$('finishPanel').hidden;
  $('finishSummary').hidden=!result;
  if(result){
-  $('finishSummary').textContent='Clôturé le '+new Date(result.endedAt).toLocaleDateString('fr-FR')+
-   ' · '+({elimine:'Éliminé',vainqueur:'Vainqueur',termine:'Terminé'}[result.status])+
-   (result.rank?' · '+result.rank+'e place':'')+' · Rapport disponible ci-dessous.';
+   const totalEntrants=Number.isSafeInteger(result.players)&&result.players>0?result.players:playersTotal(s);
+   const finalRank=Number.isSafeInteger(result.rank)&&result.rank>0?result.rank:null;
+   const rankDisplay=finalRank?`${finalRank===1?'1er':finalRank+'e'}${totalEntrants?' / '+fmt(totalEntrants):''}`:
+     (totalEntrants?`Place finale à compléter / ${fmt(totalEntrants)} joueurs`:'Place finale à compléter');
+   $('finishSummary').textContent='Clôturé le '+new Date(result.endedAt).toLocaleDateString('fr-FR')+
+    ' · '+({elimine:'Éliminé',vainqueur:'Vainqueur',termine:'Terminé'}[result.status])+ ' · '+rankDisplay+' · Rapport disponible ci-dessous.';
  }
  $('reportDownload').disabled=!result;
  $('finishReopen').hidden=!result;
+ $('finishEditResult').hidden=!result;
  $('finishForm').hidden=!!result;
  $('finishAutoHint').textContent=result?'Archivé':total(s)===0?'Stack à zéro':'Clôture manuelle';
  if(opened)$('finishIntro').textContent=result?'Tournoi archivé. Exporte le PDF ou rouvre le tournoi pour continuer.':total(s)===0?'Ton stack est à zéro. Confirme la clôture ou corrige une erreur.':'Tu peux clôturer ce tournoi, même avec des jetons restants.';
@@ -1661,8 +1666,19 @@ $('finishQuick').addEventListener('click',()=>{
  }else {$('finishStatus').value=total(s)===0?'elimine':'termine';$('finishPlayers').value=playersTotal(s)||'';}
  renderFinishStatus(s);$('finishPanel').scrollIntoView({behavior:'smooth',block:'start'});
 });
-$('finishCancel').addEventListener('click',()=>{$('finishPanel').hidden=true});
-$('finishReopen').addEventListener('click',()=>{
+ $('finishCancel').addEventListener('click',()=>{$('finishPanel').hidden=true});
+ // Corriger le classement d'un tournoi clôturé sans le rouvrir et sans perdre sa date de fin.
+ $('finishEditResult').addEventListener('click',()=>{
+   const s=current();if(!s.result)return;
+   $('finishPanel').hidden=false;
+   $('finishStatus').value=s.result.status;
+   $('finishRank').value=s.result.rank||'';
+   $('finishPlayers').value=s.result.players||playersTotal(s)||'';
+   $('finishNote').value=s.result.note||'';
+   $('finishForm').hidden=false;
+   $('finishRank').focus();
+ });
+ $('finishReopen').addEventListener('click',()=>{
  const s=current();if(!confirm('Rouvrir ce tournoi pour reprendre le suivi ou modifier le résultat ?'))return;
  s.result=null;save();render();$('finishPanel').hidden=true;toast('Tournoi rouvert');
 });
@@ -1675,8 +1691,8 @@ $('finishForm').addEventListener('submit',ev=>{
  }
  const status=$('finishStatus').value;
  if(status==='elimine'&&total(s)>0&&!confirm('Le stack est supérieur à zéro. Clôturer quand même comme éliminé ?'))return;
- s.result={status,rank,players,note:$('finishNote').value.trim(),endedAt:now()};
- save();render();toast('Tournoi clôturé · Bilan PDF disponible');
+ s.result={status,rank,players:players??playersTotal(s),note:$('finishNote').value.trim(),endedAt:s.result?.endedAt||now()};
+ save();render();toast('Résultat enregistré · Place finale affichée sur le PDF');
 });
 
 // V17 : échelle poker : chaque palier 0-5, 5-10, 10-20, 20-40... a même hauteur (PDF + app).
@@ -1710,7 +1726,7 @@ function pdfReport(s,st){
   tx(desc.length>descLen?desc.slice(0,descLen-1)+'…':desc,94,H-91,9,[0.75,0.82,0.89]);
   if(placement){
    rect(W-202,H-96,166,78,[0.12,0.24,0.34]);
-   tx('CLASSEMENT FINAL',W-190,H-42,8,[0.68,0.84,0.90],true);
+   tx('PLACE FINALE / JOUEURS',W-190,H-42,8,[0.68,0.84,0.90],true);
    const sz=placement.length>14?13:placement.length>11?16:placement.length>8?21:26;
    tx(placement,W-190,H-75,sz,[0.45,0.95,0.81],true);
   }
@@ -1719,7 +1735,7 @@ function pdfReport(s,st){
   tx(`${page} / 2`,W-65,21,8,MUTED);
  }
  function section(title,y){tx(title,37,y,11,NAVY,true);stroke(37,y-8,W-37,y-8,[0.83,0.87,0.90],.7)}
- function metric(x,y,w,title,value,color=NAVY){rect(x,y-53,w,65,[0.95,0.97,0.98]);tx(title,x+11,y-7,8,MUTED);tx(value,x+11,y-30,15,color,true)}
+ function metric(x,y,w,title,value,color=NAVY,fontSize=15){rect(x,y-53,w,65,[0.95,0.97,0.98]);tx(title,x+11,y-7,8,MUTED);tx(value,x+11,y-30,fontSize,color,true)}
  function plot(points,x,y,width,height,mode){
   // On réserve une bande sous la courbe pour les numéros des mains.
   // Les libellés sont sous les traits verticaux, pas au-dessus du graphique.
@@ -1759,10 +1775,17 @@ function pdfReport(s,st){
  const r=s.result||{};
  const date=new Date(r.endedAt||now()).toLocaleDateString('fr-FR');
  const status={elimine:'Éliminé',vainqueur:'Vainqueur',termine:'Terminé'}[r.status]||'Terminé';
- const place=r.rank?`${r.rank}${r.rank===1?'er':'e'} / ${r.players||'?'}`:(r.status==='vainqueur'?`1er / ${r.players||'?'}`:(r.players?`? / ${r.players}`:'Non précisée'));
- topTitle(s.name.slice(0,47),date+'   |   '+status,1,r.rank||r.status==='vainqueur'?place:null);
- metric(37,696,167,'Mains distribuées',fmt(st.hands));metric(214,696,167,'Mains jouées',fmt(st.played));
- metric(391,696,167,'Mains jouées (%)',st.percent===null?'—':fmt1(st.percent)+' %',GREEN);
+  const finalPlayers=Number.isSafeInteger(r.players)&&r.players>0?r.players:playersTotal(s);
+  const finalRank=Number.isSafeInteger(r.rank)&&r.rank>0?r.rank:(r.status==='vainqueur'?1:null);
+  const place=finalRank?`${finalRank}${finalRank===1?'er':'e'} / ${finalPlayers?fmt(finalPlayers):'?'}`:
+    (finalPlayers?`? / ${fmt(finalPlayers)}`:'À compléter');
+  // Place finale visible sur les DEUX pages et en première statistique du PDF.
+  // Ne jamais inclure l'average du tournoi dans le bilan.
+  topTitle(s.name.slice(0,47),date+'   |   '+status,1,place);
+  metric(37,696,124,'PLACE FINALE',place,GREEN,place.length>11?11:15);
+  metric(170,696,124,'Mains suivies',fmt(st.hands));
+  metric(303,696,124,'Mains jouées',fmt(st.played));
+  metric(436,696,122,'Mains jouées (%)',st.percent===null?'—':fmt1(st.percent)+' %',GREEN);
  section('ÉVOLUTION DU STACK EN BB',619);
  plot(st.points,37,345,521,257,'bb');
  tx('Echelle poker : paliers de même hauteur (0-5, 5-10, 10-20, 20-40...)',39,336,8,MUTED);
@@ -1776,7 +1799,7 @@ function pdfReport(s,st){
  tx('Les folds automatiques et mains sans variation sont exclus des moyennes.',39,137,8,MUTED);
  if(r.note){section('NOTE DE FIN DE TOURNOI',115);lineText(r.note,40,96,95,8,MUTED)}
  // PAGE 2
- out=pages[1];topTitle('ANALYSE DETAILLEE',s.name.slice(0,60)+'   |   '+date,2,r.rank||r.status==='vainqueur'?place:null);
+ out=pages[1];topTitle('ANALYSE DETAILLEE',s.name.slice(0,60)+'   |   '+date,2,place);
  section('EVOLUTION EN JETONS',705);plot(st.points,37,457,521,233,'chips');
  section('MAINS JOUEES SELON LA PROFONDEUR',427);
  const headings=[39,245,354,454];
