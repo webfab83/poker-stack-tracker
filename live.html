@@ -31,13 +31,38 @@ h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{
 .canvasbox{background:#0b1928;border:1px solid #22374e;border-radius:13px;padding:6px;margin-top:11px;overflow:hidden}canvas{display:block;width:100%;height:260px}.small{font-size:.8rem;color:var(--muted);line-height:1.55}.foot{font-size:.75rem;color:#8098ad;text-align:center;margin-top:22px}.foot a{color:#a4d2ff}
 @media(max-width:365px){main{padding:13px 9px 35px}.card{padding:13px}.metric{padding:8px}.metric strong{font-size:.95rem}.hero{font-size:2.4rem}}
 @media(min-width:650px){canvas{height:320px}}
+
+/* V24.5 — véritable bilan final, sans publication des notes privées. */
+.final-card{background:linear-gradient(155deg,#24364a,#162638);border-color:#796b4e}
+.final-card[hidden]{display:none}
+.final-header{display:flex;align-items:center;gap:8px;color:#f3db95;font-size:.78rem;font-weight:850;letter-spacing:1.1px;text-transform:uppercase}
+.final-place{font-size:clamp(2.1rem,9vw,3.8rem);line-height:1.12;font-weight:900;color:#ffe3a0;margin:13px 0 7px;letter-spacing:-1px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.final-result{color:#f1f5fa;font-weight:750;font-size:1.03rem}
+.final-meta{color:var(--muted);font-size:.83rem;line-height:1.6;margin:8px 0 0}
+.final-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}
+.final-metrics>div{border-radius:12px;padding:12px;background:#101f30;border:1px solid #33465b;min-width:0}
+.final-metrics span{display:block;color:var(--muted);font-size:.75rem;margin-bottom:4px}
+.final-metrics strong{font-size:1.1rem;display:block;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
 <main>
-<header><img src="./icons/icon-192-v19.png" alt=""><div><strong>STACK<span style="color:var(--cyan)">.</span></strong><span>Suivi du tournoi — vue spectateur · V24.3</span></div></header>
+<header><img src="./icons/icon-192-v19.png" alt=""><div><strong>STACK<span style="color:var(--cyan)">.</span></strong><span>Suivi du tournoi — vue spectateur · V24.5</span></div></header>
 <div id="statusMsg" role="status" aria-live="polite">Connexion au tournoi…</div>
 <div id="tournoi" hidden>
+  <section class="card final-card" id="finalPanel" hidden aria-labelledby="finalTitle">
+    <div class="final-header" id="finalTitle">🏆 Bilan du tournoi</div>
+    <div class="final-place" id="finalPlace">Tournoi terminé</div>
+    <div class="final-result" id="finalOutcome">Résultat enregistré</div>
+    <div class="final-meta" id="finalMeta"></div>
+    <div class="final-metrics">
+      <div><span>Mains suivies</span><strong id="finalHands">—</strong></div>
+      <div><span>Mains jouées</span><strong id="finalPlayed">—</strong></div>
+      <div><span>Pic du stack</span><strong id="finalPeak">—</strong></div>
+      <div><span>Pic en blindes</span><strong id="finalPeakBB">—</strong></div>
+    </div>
+    <p class="small" style="margin-top:12px">Le graphique final est conservé ci-dessous. Ce lien reste consultable tant que le propriétaire laisse son partage activé.</p>
+  </section>
   <section class="card">
     <div class="line"><span class="pill" id="liveBadge">● En direct</span><span id="syncTime" class="small">Dernière actualisation —</span></div>
     <h1 id="liveName">Tournoi</h1>
@@ -71,6 +96,6 @@ h1{font-size:clamp(1.2rem,5vw,1.6rem);margin:0 0 15px;overflow-wrap:anywhere}h2{
 <div class="foot">Consultation seule · Aucun compte nécessaire · <a href="./">Ouvrir STACK</a></div>
 </main>
 <script src="./live-config.js?stack=24.1"></script>
-<script src="./live-viewer.js?stack=24.3"></script>
+<script src="./live-viewer.js?stack=24.5"></script>
 </body>
 </html>

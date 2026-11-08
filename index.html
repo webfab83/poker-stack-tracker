@@ -256,7 +256,7 @@ header{margin-bottom:12px}
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.4</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.5</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -333,6 +333,7 @@ header{margin-bottom:12px}
 <section class="panel" id="finishPanel" hidden aria-label="Bilan du tournoi">
  <div class="panel-head"><h2>🏁 Clôture et bilan du tournoi</h2><span class="small" id="finishAutoHint">Terminer le tournoi</span></div>
  <p id="finishIntro" class="small">Clôture facultative : tes mains restent enregistrées. Tu peux rouvrir le tournoi ensuite.</p>
+ <p class="small" style="margin:6px 0 12px">🔒 Si ton partage en direct est actif, la place finale, le résultat et les statistiques du tournoi seront visibles par les spectateurs. <strong>Ton bilan personnel restera privé.</strong> Le lien spectateur continuera de fonctionner après la clôture.</p>
  <div id="finishSummary" hidden class="finish-banner"></div>
  <form id="finishForm">
   <div class="finish-fields">
@@ -1571,7 +1572,7 @@ function showFinishOffer(){
  const s=current();if(s.result)return;
  $('finishPanel').hidden=false;
  $('finishStatus').value=total(s)===0?'elimine':'termine';
- $('finishRank').value='';$('finishPlayers').value='';$('finishNote').value='';
+ $('finishRank').value='';$('finishPlayers').value=playersTotal(s)||'';$('finishNote').value='';
  renderFinishStatus(s);
  $('finishPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -1579,7 +1580,7 @@ $('finishQuick').addEventListener('click',()=>{
  const s=current();$('finishPanel').hidden=false;
  if(s.result){$('finishStatus').value=s.result.status;$('finishRank').value=s.result.rank||'';
   $('finishPlayers').value=s.result.players||'';$('finishNote').value=s.result.note||'';
- }else $('finishStatus').value=total(s)===0?'elimine':'termine';
+ }else {$('finishStatus').value=total(s)===0?'elimine':'termine';$('finishPlayers').value=playersTotal(s)||'';}
  renderFinishStatus(s);$('finishPanel').scrollIntoView({behavior:'smooth',block:'start'});
 });
 $('finishCancel').addEventListener('click',()=>{$('finishPanel').hidden=true});
@@ -1765,10 +1766,25 @@ window.STACKLiveBridge={
   for(let i=0;i<points.length;i++)if(i===0||i===points.length-1||i%step===0){
     const p=points[i];filtered.push([i,p.chips,p.blind]);
   }
-  // Valeurs volontairement filtrées pour les spectateurs. Les mains et notes ne partent jamais.
+  // Valeurs volontairement filtrées pour les spectateurs. Les mains, notes et prix ne partent jamais.
+  // Les données finales sont publiques uniquement si le partage est déjà activé par le propriétaire.
+  const result=s.result;
+  const totalPlayers=playersTotal(s);
+  const rankedPlayers=Number.isSafeInteger(result?.players)&&result.players>0?result.players:totalPlayers;
+  const finishDate=result?.endedAt&&Number.isFinite(Date.parse(result.endedAt))?result.endedAt:null;
+  const started=Date.parse(s.createdAt||''),ended=Date.parse(finishDate||'');
+  const durationMinutes=result&&Number.isFinite(started)&&Number.isFinite(ended)&&ended>=started&&ended-started<366*86400000
+    ?Math.round((ended-started)/60000):null;
+  const peakStack=points.reduce((best,p)=>Math.max(best,Number(p.chips)||0),0);
+  const peakBB=points.reduce((best,p)=>Math.max(best,p.blind>0?p.chips/p.blind:0),0);
   return {name:s.name.slice(0,80),start:s.startStack,stack:total(s),sb:s.sb,bb:s.bb,
    ante:s.ante,anteMode:s.anteMode,hands:count,played:playedHands(s),
-   finished:!!s.result,playersRemaining:playersRemaining(s),playersTotal:playersTotal(s),points:filtered};
+   finished:!!result,playersRemaining:playersRemaining(s),playersTotal:totalPlayers,
+   finalStatus:result?result.status:null,
+   finalRank:result&&Number.isSafeInteger(result.rank)&&result.rank>0?result.rank:null,
+   finalPlayers:result?rankedPlayers:null,finishedAt:result?finishDate:null,
+   durationMinutes,peakStack,peakBB:Math.round(peakBB*10)/10,
+   points:filtered};
  }
 };
 save();render();setBBScale(bbScale);setGraphMode(graphMode);

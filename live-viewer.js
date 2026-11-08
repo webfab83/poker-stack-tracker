@@ -119,7 +119,35 @@
   $('liveDiff').className=delta>0?'green':'';
   $('livePlayed').textContent=s.hands?((100*s.played/s.hands).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %'):'—';
   $('liveAnte').textContent=fmt(s.ante)+(s.anteMode==='bba'?' BBA':'');
-  $('liveBadge').textContent=s.finished?'● Terminé':'● En direct';
+  // Bilan final : compatible avec les snapshots V24.4 qui n'ont pas ces champs.
+  const finished=!!s.finished;
+  $('finalPanel').hidden=!finished;
+  if(finished){
+    const rank=Number.isSafeInteger(s.finalRank)&&s.finalRank>0?s.finalRank:null;
+    const entrants=Number.isSafeInteger(s.finalPlayers)&&s.finalPlayers>0?s.finalPlayers:playersTotal;
+    const rankLabel=rank===null?'Tournoi terminé':(rank===1?'1er':fmt(rank)+'e')+(entrants?' / '+fmt(entrants):'');
+    $('finalPlace').textContent=rankLabel;
+    const outcomes={elimine:'Éliminé',vainqueur:'🏆 Victoire !',termine:'Tournoi terminé'};
+    $('finalOutcome').textContent=outcomes[s.finalStatus]||'Résultat enregistré';
+    const meta=[];
+    if(entrants)meta.push(fmt(entrants)+' participants au départ');
+    if(typeof s.finishedAt==='string'&&Number.isFinite(Date.parse(s.finishedAt))){
+      meta.push('Clôturé le '+new Date(s.finishedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}));
+    }
+    if(Number.isFinite(s.durationMinutes)&&s.durationMinutes>=0){
+      const minutes=Math.round(s.durationMinutes),hours=Math.floor(minutes/60);
+      meta.push('Suivi : '+(hours?fmt(hours)+' h '+String(minutes%60).padStart(2,'0'):'')+(hours?'':' '+fmt(minutes)+' min').trim());
+    }
+    $('finalMeta').textContent=meta.join(' · ');
+    $('finalHands').textContent=fmt(s.hands);
+    $('finalPlayed').textContent=s.hands?(100*s.played/s.hands).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';
+    const dataPoints=Array.isArray(s.points)?s.points:[];
+    const peakChip=Number.isFinite(s.peakStack)&&s.peakStack>=0?s.peakStack:Math.max(0,...dataPoints.filter(p=>Array.isArray(p)).map(p=>Number(p[1])||0));
+    const peakBlind=Number.isFinite(s.peakBB)&&s.peakBB>=0?s.peakBB:Math.max(0,...dataPoints.filter(p=>Array.isArray(p)&&p[2]>0).map(p=>p[1]/p[2]));
+    $('finalPeak').textContent=fmt(peakChip)+' jetons';
+    $('finalPeakBB').textContent=peakBlind.toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';
+  }
+  $('liveBadge').textContent=s.finished?'🏁 Terminé':'● En direct';
   $('liveBadge').classList.toggle('off',!!s.finished);
   $('syncTime').textContent='Actualisé le '+new Date(payload.updated_at).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   lastGood=Date.now();draw();
