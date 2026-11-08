@@ -1,0 +1,24 @@
+STACK V23 — Propagation des blindes corrigées
+
+INSTALLATION (GitHub Pages)
+1. Sauvegarder d'abord tous les tournois (Réglages > Sauvegarder JSON).
+2. Remplacer uniquement index.html et sw.js à la racine du dépôt GitHub.
+3. Cliquer sur Commit changes et attendre la publication GitHub Pages.
+4. Ouvrir STACK avec Internet. Vérifier le badge V23 près du titre.
+Ne pas désinstaller STACK ou vider les données du navigateur.
+
+UTILISATION
+- Ouvrir l'historique > numéro de main (#145) > Modifier.
+- Modifier SB / BB / ante / mode d'ante.
+- Laisser cochée « Appliquer ce changement de blindes aux mains suivantes ».
+- STACK propage le niveau corrigé jusqu'à la main qui précède le prochain changement de blindes déjà enregistré.
+- Les folds dont la variation correspondait aux blindes obligatoires précédentes sont recalculés.
+- Les gains, pertes et notes des autres mains restent intacts.
+- Si la correction touche le dernier niveau du tournoi, les prochaines mains utiliseront les nouveaux montants.
+- Décocher la case pour corriger uniquement la main sélectionnée.
+- Les graphiques et bilans sont automatiquement recalculés.
+
+PARTAGER UN TOURNOI
+- Dans Évolution du stack > Partager > Partager l'image, envoyer la carte PNG vers WhatsApp ou une autre application.
+- Pour les 2 pages détaillées : Clôturer / bilan PDF, puis partager le PDF téléchargé.
+- Le site GitHub Pages ne conserve pas les données de ton tournoi en ligne : communiquer simplement l'adresse de STACK ne partage donc pas le tournoi personnel.

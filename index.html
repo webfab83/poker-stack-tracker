@@ -211,11 +211,18 @@ header{margin-bottom:12px}
 }
 #selectedCard .selected-values strong { min-width:0; overflow-wrap:anywhere; }
 .app-build{font-weight:600;color:#89a6ba;font-size:0.6rem;margin-left:4px;vertical-align:top}
+
+/* V23 : correction des blindes dans la revue des mains */
+.blind-propagation{margin:13px 0 15px;padding:12px;background:#10293a;border:1px solid #356279;border-radius:12px}
+.blind-propagation[hidden]{display:none!important}
+.blind-propagation-label{display:flex;align-items:flex-start;gap:10px;line-height:1.4;margin:0 0 7px;cursor:pointer;color:#f1fbff}
+.blind-propagation-label input{flex:0 0 22px;width:22px;min-width:22px;height:22px;min-height:22px;padding:0;margin:0;accent-color:var(--green)}
+.blind-propagation p{margin-top:6px;line-height:1.45}
 </style>
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V22</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V23</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -374,6 +381,11 @@ header{margin-bottom:12px}
     <div><label for="editorAnteMode">Mode d'ante</label><select id="editorAnteMode"><option value="bba">Big Blind Ante</option><option value="each">Ante individuelle</option></select></div>
     <div class="wide"><label for="editorDate">Date et heure</label><input id="editorDate" type="datetime-local" required></div>
     <div class="wide"><label for="editorNote">Notes sur la main</label><textarea id="editorNote" maxlength="2000" rows="3" placeholder="Tes notes…"></textarea></div>
+   </div>
+   <div id="blindPropagationBox" class="blind-propagation">
+    <label class="blind-propagation-label" for="editorPropagateBlind"><input id="editorPropagateBlind" type="checkbox" checked><span>Appliquer ce changement de blindes aux mains suivantes</span></label>
+    <p id="blindPropagationPreview" class="small">Propagation jusqu'au prochain changement de niveau déjà enregistré.</p>
+    <p class="small">Les folds de blindes correspondants sont recalculés ; les autres variations restent inchangées.</p>
    </div>
    <div class="editor-actions"><button type="submit" class="action gain" style="min-height:48px">Enregistrer</button><button type="button" class="ghost" id="cancelEditor">Annuler</button></div>
   </form>
@@ -627,6 +639,23 @@ $('fileInput').addEventListener('change',async e=>{
   save();render();toast(missing.length+' tournoi(x) récupéré(s)');
  }catch(err){toast('Import impossible : '+err.message)}finally{e.target.value=''}
 });
+// Répercussion rétroactive d'un changement de blindes :
+// on s'arrête au prochain niveau qui diffère de l'ancien niveau de la main corrigée.
+function blindSnapshot(h){return {sb:h.sb,bb:h.bb,ante:h.ante??0,anteMode:h.anteMode||'bba'}}
+function sameBlind(a,b){return a.sb===b.sb&&a.bb===b.bb&&a.ante===b.ante&&a.anteMode===b.anteMode}
+function blindCostForHand(hand,level){const pos=hand.position||'other';return (pos==='sb'?level.sb:pos==='bb'?level.bb:0)+(level.anteMode==='each'||(level.anteMode==='bba'&&pos==='bb')?level.ante:0)}
+function propagationEnd(hands,index){
+ const original=blindSnapshot(hands[index]);let end=index+1;
+ while(end<hands.length&&sameBlind(blindSnapshot(hands[end]),original))end++;
+ return end;
+}
+function autoCorrectFold(hand,prior,next){
+ // Ne toucher qu'aux folds dont la variation était exactement celle des blindes obligatoires.
+ // Une variation manuellement personnalisée doit rester intacte.
+ if(hand.kind!=='fold'||!['other','sb','bb'].includes(hand.position))return hand.delta;
+ const previous=-blindCostForHand(hand,prior);
+ return hand.delta===previous?-blindCostForHand(hand,next):hand.delta;
+}
 // L'ordre du tableau hands est l'ordre réel des mains. Toute correction recalcule la suite.
 let editingHand=null; // {mode: 'edit'|'insert', sessionId, index}
 let suppressAutoFollowOnce=false;
@@ -666,6 +695,8 @@ function openHandEditor(mode,index){
  const nearby=hand||(index?s.hands[index-1]:s.hands[0])||s;
  $('editorTitle').textContent=mode==='edit'?`✎ Modifier la main n° ${index+1}`:'＋ Main oubliée';
  $('editorSummary').textContent=mode==='edit'?'Les stacks suivants, la courbe et les exports seront recalculés.':'Choisis l’endroit où insérer la main ; les stacks suivants seront recalculés.';
+ $('blindPropagationBox').hidden=mode!=='edit';
+ $('editorPropagateBlind').checked=true;
  $('insertPlacement').hidden=mode!=='insert';
  $('editorAfter').max=String(s.hands.length);
  $('editorAfter').value=String(index);
@@ -678,10 +709,27 @@ function openHandEditor(mode,index){
  $('editorAnteMode').value=nearby.anteMode??s.anteMode;
  $('editorDate').value=toLocalDate(hand?.createdAt||insertedDate(s,index));
  $('editorNote').value=hand?.note||'';
+ updateBlindPropagationPreview();
  $('handEditor').hidden=false;
  $('handEditor').scrollIntoView({behavior:'smooth',block:'start'});
  $('editorDelta').focus({preventScroll:true});
 }
+function updateBlindPropagationPreview(){
+ const e=editingHand;
+ if(!e||e.mode!=='edit')return;
+ const s=current(),old=s.hands[e.index];
+ if(!old)return;
+ const updated={sb:cleanInt($('editorSB').value),bb:cleanInt($('editorBB').value),ante:cleanInt($('editorAnte').value),anteMode:$('editorAnteMode').value};
+ const hasChanged=!sameBlind(blindSnapshot(old),updated);
+ const end=propagationEnd(s.hands,e.index);
+ const following=Math.max(0,end-e.index-1);
+ const preview=$('blindPropagationPreview');
+ if(!hasChanged){preview.textContent='Blindes inchangées : aucune propagation nécessaire.';return}
+ if(!$('editorPropagateBlind').checked){preview.textContent='Seule la main en cours sera corrigée.';return}
+ preview.textContent=`Les mains ${e.index+1} à ${end} seront corrigées (${following} main${following>1?'s':''} suivante${following>1?'s':''}), puis arrêt au prochain niveau.`;
+}
+['editorSB','editorBB','editorAnte','editorAnteMode'].forEach(id=>$(id).addEventListener('input',updateBlindPropagationPreview));
+$('editorPropagateBlind').addEventListener('change',updateBlindPropagationPreview);
 function closeHandEditor(){editingHand=null;$('handEditor').hidden=true}
 $('closeEditor').addEventListener('click',closeHandEditor);
 $('cancelEditor').addEventListener('click',closeHandEditor);
@@ -700,12 +748,40 @@ $('handEditForm').addEventListener('submit',event=>{
   toast('Vérifie la variation, les blindes et la date');return;
  }
  const old=e.mode==='edit'?s.hands[index]:null;
- const changed={id:old?.id||uid(),delta,sb,bb,ante,anteMode,kind,position,note,createdAt:timestamp.toISOString()};
- const next=s.hands.slice();
- if(e.mode==='edit')next[index]=changed;else next.splice(index,0,changed);
+ const changed={...(old||{}),id:old?.id||uid(),delta,sb,bb,ante,anteMode,kind,position,note,createdAt:timestamp.toISOString()};
+ const next=s.hands.map(hand=>({...hand}));
+ const originalLevel=old?blindSnapshot(old):null;
+ const newLevel=blindSnapshot(changed);
+ const levelWasChanged=!!old&&!sameBlind(originalLevel,newLevel);
+ const propagate=levelWasChanged&&$('editorPropagateBlind').checked;
+ let end=index+1,foldsAdjusted=0;
+ if(e.mode==='edit'){
+  if(propagate)end=propagationEnd(s.hands,index);
+  // Recalcul automatique de la main corrigée si c'est un fold de blindes
+  // et que l'utilisateur n'a pas touché à sa variation.
+  if(levelWasChanged&&changed.kind==='fold'&&old.kind==='fold'&&delta===old.delta){
+   const corrected=autoCorrectFold(old,originalLevel,newLevel);
+   if(corrected!==delta){changed.delta=corrected;foldsAdjusted++}
+  }
+  next[index]=changed;
+  if(propagate){
+   for(let i=index+1;i<end;i++){
+    const h=next[i];
+    const newDelta=autoCorrectFold(h,blindSnapshot(h),newLevel);
+    if(h.delta!==newDelta){h.delta=newDelta;foldsAdjusted++}
+    Object.assign(h,newLevel);
+   }
+  }
+ }else next.splice(index,0,changed);
  const issue=timelineIssue(s.startStack,next);
  if(issue!==null){toast(`Correction impossible : stack négatif à la main ${issue}`);return}
+ // Si la correction touche le dernier niveau enregistré, les prochaines mains
+ // devront aussi utiliser les blindes corrigées.
+ const lastBefore=s.hands[s.hands.length-1];
+ const currentWasTail=!!lastBefore&&sameBlind(blindSnapshot(s),blindSnapshot(lastBefore));
+ const changeAtTail=e.mode==='edit'&&levelWasChanged&&(propagate?end===s.hands.length:index===s.hands.length-1);
  s.hands=next;
+ if(changeAtTail&&currentWasTail){s.sb=sb;s.bb=bb;s.ante=ante;s.anteMode=anteMode;s.levelIndex=s.blindLevels.findIndex(l=>l.sb===sb&&l.bb===bb&&l.ante===ante)}
  save();closeHandEditor();
  const selected=index+1;
  selectedIndex=selected;
@@ -715,7 +791,7 @@ $('handEditForm').addEventListener('submit',event=>{
   else if(selected>=viewStart+visible)viewStart=Math.max(0,selected-visible+1);
  }
  suppressAutoFollowOnce=true;render();selectPoint(selected,true);if(total(s)===0&&!s.result)showFinishOffer();
- toast(e.mode==='edit'?'Main corrigée · graphique recalculé':'Main insérée · graphique recalculé');
+ toast(e.mode==='edit'?(propagate?`Blindes corrigées jusqu'à la main ${end}${foldsAdjusted?` · ${foldsAdjusted} fold(s) ajusté(s)`:''}`:'Main corrigée · graphique recalculé'):'Main insérée · graphique recalculé');
 });
 $('olderHands').addEventListener('click',()=>{historyLimit+=30;render()});
 function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;renderFinishStatus(s);$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);const played=playedHands(s);$('playedPercent').textContent=s.hands.length?(100*played/s.hands.length).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';$('playedDetail').textContent=fmt(played)+' / '+fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;configureBlindInterface();updateFoldLabel();syncBulkSetup();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';

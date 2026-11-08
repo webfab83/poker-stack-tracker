@@ -1,5 +1,5 @@
-/* STACK V22 : cache isolé. Les tournois restent dans localStorage, jamais dans le cache. */
-const CACHE_NAME = 'stack-poker-pwa-v22-revue-navigation-20261030';
+/* STACK V23 : cache isolé. Les tournois restent dans localStorage, jamais dans le cache. */
+const CACHE_NAME = 'stack-poker-pwa-v23-blind-propagation-20261108';
 const INDEX_URL = './index.html';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME)
