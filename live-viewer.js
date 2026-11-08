@@ -15,7 +15,29 @@
   !/REMPLACER|VOTRE/i.test(C.publishableKey);
  const nf=new Intl.NumberFormat('fr-FR');
  const fmt=x=>nf.format(Math.round(Number(x)||0));
- let mode='chips',db=null,latest=null,inFlight=false,reload=false,channel=null,lastGood=0;
+ let mode='chips',bbScale='poker',db=null,latest=null,inFlight=false,reload=false,channel=null,lastGood=0;
+ try{if(localStorage.getItem('stack-live-spectator-bb-scale')==='linear')bbScale='linear'}catch(e){}
+ // Identique à l'échelle Paliers BB de l'application principale.
+ // 0-5, 5-10, 10-20, 20-40, 40-80... : intervalles de même hauteur.
+ function bbPokerMap(value){
+   const v=Math.max(0,Number(value)||0);
+   if(v<=5)return v/5;
+   if(v<=10)return 1+(v-5)/5;
+   return 2+Math.log2(v/10);
+ }
+ function bbPokerUnmap(position){
+   const z=Math.max(0,Number(position)||0);
+   if(z<=1)return 5*z;
+   if(z<=2)return 5+5*(z-1);
+   return 10*Math.pow(2,z-2);
+ }
+ function chartTicks(maxMapped,usePoker){
+   if(!usePoker)return Array.from({length:5},(_,k)=>k*maxMapped/4);
+   const ticks=[0,5,10];
+   for(let value=20;bbPokerMap(value)<=maxMapped+1e-8 && value<1e12;value*=2)ticks.push(value);
+   return ticks.filter(v=>bbPokerMap(v)<=maxMapped+1e-8);
+ }
+
  const status=(s,bad=false)=>{const e=$('statusMsg');e.hidden=false;e.textContent=s;e.style.color=bad?'#ffaaaa':''};
  const show=()=>{$('tournoi').hidden=false;$('statusMsg').hidden=true};
  function draw(){
@@ -28,24 +50,53 @@
   const raw=Array.isArray(s.points)?s.points:[];
   const points=raw.filter(p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite));
   if(!points.length)return;
-  const vals=points.map(p=>mode==='bb'?p[2]>0?p[1]/p[2]:0:p[1]);
-  const maxVal=Math.max(1,...vals),minVal=Math.min(0,...vals),span=Math.max(1,maxVal-minVal);
-  const xAt=i=>left+(points.length===1?0:(i/(points.length-1))*plotW);
-  const yAt=v=>top+plotH-((v-minVal)/span)*plotH;
-  ctx.font='11px system-ui';ctx.fillStyle='#a1bacc';ctx.strokeStyle='#2d4660';ctx.lineWidth=1;
-  for(let k=0;k<=4;k++){
-   const val=minVal+span*k/4,y=yAt(val);
-   ctx.globalAlpha=.7;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();ctx.globalAlpha=1;
-   ctx.textAlign='right';ctx.fillText(mode==='bb'?val.toFixed(val<20?1:0):val>=1000?(val/1000).toFixed(val<10000?1:0)+'k':Math.round(val).toString(),left-7,y+3);
+  const usePoker=mode==='bb'&&bbScale==='poker';
+  const toAxis=v=>usePoker?bbPokerMap(v):v;
+  const vals=points.map(p=>mode==='bb'?(p[2]>0?p[1]/p[2]:0):p[1]);
+  const maxVal=Math.max(1,...vals);
+  const maxAxis=Math.max(usePoker?.35:1,toAxis(maxVal)*1.10);
+  const yAt=v=>top+plotH-(toAxis(Math.max(0,v))/maxAxis)*plotH;
+  const fmtAxis=v=>mode==='bb'?(v<10?v.toLocaleString('fr-FR',{maximumFractionDigits:1}):Math.round(v).toLocaleString('fr-FR')):
+     (v>=1000?(v/1000).toLocaleString('fr-FR',{maximumFractionDigits:v<10000?1:0})+'k':Math.round(v).toLocaleString('fr-FR'));
+  ctx.font='11px system-ui';ctx.textAlign='right';ctx.textBaseline='middle';ctx.lineWidth=1;
+  let lastLabelY=Infinity;
+  for(const tick of chartTicks(maxAxis,usePoker)){
+   // Les graduations des paliers restent lisibles même pour de grands stacks.
+   const value=usePoker?tick:tick;
+   const y=yAt(value);
+   if(y<top-1||y>top+plotH+1)continue;
+   const isTen=mode==='bb'&&Math.abs(value-10)<1e-7;
+   const isTwenty=mode==='bb'&&Math.abs(value-20)<1e-7;
+   ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);
+   ctx.strokeStyle=isTen?'#ac6966':isTwenty?'#a69467':'#2d4660';
+   if(isTen||isTwenty)ctx.setLineDash([5,5]);
+   ctx.stroke();ctx.setLineDash([]);
+   if(Math.abs(lastLabelY-y)>=17){
+     ctx.fillStyle=isTen?'#ffb9b8':isTwenty?'#ffe2a0':'#a1bacc';
+     ctx.fillText(fmtAxis(value),left-7,y);lastLabelY=y;
+   }
   }
-  if(mode==='bb')for(const n of [10,20]){if(n>=minVal&&n<=maxVal){ctx.strokeStyle='#667c9a';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(left,yAt(n));ctx.lineTo(width-right,yAt(n));ctx.stroke();ctx.setLineDash([])}}
-  // Les x viennent du n° de main, pour préserver les espacements lors d'un échantillonnage.
+  // Toujours conserver les repères 10/20 BB, même si une graduation a été supprimée.
+  if(mode==='bb')for(const [limit,color] of [[10,'#ff9291'],[20,'#f3cc76']]){
+   if(toAxis(limit)>maxAxis)continue;
+   const y=yAt(limit);
+   ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);
+   ctx.setLineDash([5,5]);ctx.lineWidth=1.2;ctx.strokeStyle=color+'b5';ctx.stroke();ctx.setLineDash([]);ctx.lineWidth=1;
+  }
+  // L'abscisse utilise les numéros de main réels, même si les points sont échantillonnés.
   const minN=points[0][0],maxN=points[points.length-1][0],diff=Math.max(1,maxN-minN);
   const xp=p=>left+(p[0]-minN)/diff*plotW;
+  const baseline=top+plotH;
+  const fill=ctx.createLinearGradient(0,top,0,baseline);
+  fill.addColorStop(0,'rgba(72,220,182,.24)');fill.addColorStop(1,'rgba(72,220,182,.01)');
+  ctx.beginPath();ctx.moveTo(xp(points[0]),baseline);
+  points.forEach(p=>ctx.lineTo(xp(p),yAt(mode==='bb'?(p[2]>0?p[1]/p[2]:0):p[1])));
+  ctx.lineTo(xp(points[points.length-1]),baseline);ctx.closePath();ctx.fillStyle=fill;ctx.fill();
   ctx.lineWidth=2.6;ctx.strokeStyle='#48dcb6';ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
   points.forEach((p,i)=>{const x=xp(p),y=yAt(vals[i]);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
   const end=points[points.length-1];ctx.fillStyle='#48dcb6';ctx.beginPath();ctx.arc(xp(end),yAt(vals[vals.length-1]),4.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#a1bacc';ctx.textAlign='left';ctx.fillText('1',left, height-9);ctx.textAlign='right';ctx.fillText('Main '+fmt(end[0]),width-right,height-9);
+  ctx.font='11px system-ui';ctx.fillStyle='#a1bacc';ctx.textBaseline='alphabetic';ctx.textAlign='left';
+  ctx.fillText('Départ',left,height-9);ctx.textAlign='right';ctx.fillText('Main '+fmt(end[0]),width-right,height-9);
  }
  function render(payload){
   const s=payload.snapshot||{};
@@ -58,6 +109,11 @@
   $('liveBB').textContent=(s.stack/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';
   $('liveBlinds').textContent=fmt(s.sb)+' / '+fmt(s.bb);
   $('liveHands').textContent=fmt(s.hands);
+  // Données facultatives : les spectateurs des anciennes versions restent compatibles.
+  const playersTotal=Number.isSafeInteger(s.playersTotal)&&s.playersTotal>0?s.playersTotal:null;
+  const playersRemaining=Number.isSafeInteger(s.playersRemaining)&&s.playersRemaining>=0?s.playersRemaining:null;
+  $('livePlayersRow').hidden=(playersTotal===null&&playersRemaining===null);
+  $('livePlayers').textContent=(playersRemaining===null?'—':fmt(playersRemaining))+' / '+(playersTotal===null?'—':fmt(playersTotal));
   const delta=s.stack-s.start;
   $('liveDiff').textContent=(delta>=0?'+':'')+fmt(delta);
   $('liveDiff').className=delta>0?'green':'';
@@ -81,9 +137,29 @@
    else{$('syncTime').textContent='Connexion instable — dernière donnée affichée';}}
   finally{inFlight=false;if(reload){reload=false;refresh()}}
  }
- function changeMode(m){mode=m;$('chipsMode').setAttribute('aria-pressed',String(m==='chips'));$('bbMode').setAttribute('aria-pressed',String(m==='bb'));draw()}
+ function updateScaleControls(){
+  const asBB=mode==='bb';
+  $('bbScaleRow').hidden=!asBB;
+  $('scaleNote').hidden=!(asBB&&bbScale==='poker');
+  $('scaleLinear').setAttribute('aria-pressed',String(bbScale==='linear'));
+  $('scalePoker').setAttribute('aria-pressed',String(bbScale==='poker'));
+ }
+ function changeMode(m){
+  mode=m==='bb'?'bb':'chips';
+  $('chipsMode').setAttribute('aria-pressed',String(mode==='chips'));
+  $('bbMode').setAttribute('aria-pressed',String(mode==='bb'));
+  updateScaleControls();draw();
+ }
+ function changeScale(scale){
+  bbScale=scale==='linear'?'linear':'poker';
+  try{localStorage.setItem('stack-live-spectator-bb-scale',bbScale)}catch(e){}
+  updateScaleControls();draw();
+ }
  $('chipsMode').addEventListener('click',()=>changeMode('chips'));
  $('bbMode').addEventListener('click',()=>changeMode('bb'));
+ $('scaleLinear').addEventListener('click',()=>changeScale('linear'));
+ $('scalePoker').addEventListener('click',()=>changeScale('poker'));
+ updateScaleControls();
  window.addEventListener('resize',()=>{if(latest)draw()});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
  window.addEventListener('online',refresh);

@@ -221,6 +221,18 @@ header{margin-bottom:12px}
 
 /* V24 — partage en direct, indépendant de la saisie des mains. */
 .sr-only{left:0;clip-path:inset(50%)}
+[hidden]{display:none!important}
+/* V24.3 — joueurs restants / total, visible sur téléphone et éditable par tournoi. */
+.players-tracker{margin-top:12px;border:1px solid #32516a;background:#0d2130;border-radius:13px;padding:11px 12px}
+.players-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.players-bar-title{font-size:.79rem;color:var(--sub);font-weight:700;letter-spacing:.15px}
+.players-count{font-variant-numeric:tabular-nums;font-size:1.35rem;font-weight:850;line-height:1.25;color:#7febd0;white-space:nowrap}
+.players-ctrl{display:flex;align-items:center;gap:10px;min-width:0}
+.players-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.players-inputs label{font-size:.78rem}
+.players-inputs input{min-width:0;min-height:45px;padding:9px;font-variant-numeric:tabular-nums}
+.players-save{margin-top:10px;min-height:43px;width:100%}
+@media(max-width:350px){.players-count{font-size:1.16rem}.players-tracker{padding:9px}}
 #livePanel{scroll-margin-top:15px}
 .live-status{margin:10px 0;padding:9px 11px;background:#102c35;border:1px solid #2a5a60;border-radius:10px;color:#9df0d5;font-size:.79rem;line-height:1.55}
 .live-status.live-error{color:#ffb6b8;background:#342329;border-color:#6e4352}
@@ -231,7 +243,7 @@ header{margin-bottom:12px}
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.1</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.3</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -277,7 +289,20 @@ header{margin-bottom:12px}
  <button type="button" class="link-btn" id="quickTournament" style="margin-top:6px" aria-label="Choisir un autre tournoi"><span id="tournamentName">Tournoi du jour</span> ▾</button>
  <div class="row" style="margin-top:8px;gap:9px"><button type="button" class="finish-btn" id="finishQuick">🏁 Clôturer / bilan PDF</button><span class="small" id="finishedTag"></span></div>
  <div class="startline"><div class="micro" style="margin-top:0">Départ : <b id="startDisplay">30 000</b> jetons</div><button class="link-btn" type="button" id="editStart">✎ Modifier le stack initial</button></div>
- <div class="stats"><div class="stat"><div class="small">Évolution</div><div class="val" id="netDisplay">+0</div></div><div class="stat"><div class="small">Mains suivies</div><div class="val" id="handCount">0</div></div><div class="stat"><div class="small" title="Mains avec une variation positive ou négative, hors Fold rapide et mains à 0. Estimation basée sur les mains enregistrées.">Mains jouées ≈</div><div class="val" id="playedPercent">—</div><div class="small" id="playedDetail">0 / 0</div></div><div class="stat"><div class="small">Blindes</div><div class="val" id="blindsDisplay">100 / 200</div></div></div>
+ <div class="players-tracker" aria-label="Joueurs encore en course">
+  <div class="players-bar">
+    <div><div class="players-bar-title">👥 Joueurs restants / total</div><div id="playersCountDisplay" class="players-count" aria-live="polite">— / —</div></div>
+    <button type="button" id="playersEditToggle" class="link-btn" aria-controls="playersForm" aria-expanded="false">✎ Modifier</button>
+  </div>
+  <form id="playersForm" hidden aria-label="Actualiser le nombre de joueurs">
+    <div class="players-inputs" style="margin-top:11px">
+      <div><label for="playersRemainingInput">Restants</label><input id="playersRemainingInput" type="number" inputmode="numeric" min="0" step="1" placeholder="Ex. 23"></div>
+      <div><label for="playersTotalInput">Au départ</label><input id="playersTotalInput" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 180"></div>
+    </div>
+    <button type="submit" class="mini-btn players-save">Enregistrer les joueurs</button>
+  </form>
+</div>
+<div class="stats"><div class="stat"><div class="small">Évolution</div><div class="val" id="netDisplay">+0</div></div><div class="stat"><div class="small">Mains suivies</div><div class="val" id="handCount">0</div></div><div class="stat"><div class="small" title="Mains avec une variation positive ou négative, hors Fold rapide et mains à 0. Estimation basée sur les mains enregistrées.">Mains jouées ≈</div><div class="val" id="playedPercent">—</div><div class="small" id="playedDetail">0 / 0</div></div><div class="stat"><div class="small">Blindes</div><div class="val" id="blindsDisplay">100 / 200</div></div></div>
 </section>
 <section class="panel" id="finishPanel" hidden aria-label="Bilan du tournoi">
  <div class="panel-head"><h2>🏁 Clôture et bilan du tournoi</h2><span class="small" id="finishAutoHint">Terminer le tournoi</span></div>
@@ -432,6 +457,13 @@ function validate(d){if(!d||!Array.isArray(d.sessions)||!d.sessions.length||d.se
    s.result.note=typeof s.result.note==='string'?s.result.note.slice(0,600):'';
    if(typeof s.result.endedAt!=='string')s.result.endedAt=now();}
  }else s.result=null;
+ // Joueurs : champs facultatifs compatibles avec les anciens tournois et sauvegardes JSON.
+ const sourceTotal=Number.isSafeInteger(s.playersTotal)&&s.playersTotal>0?s.playersTotal:
+                   Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0?s.shareEntrants:
+                   Number.isSafeInteger(s.result?.players)&&s.result.players>0?s.result.players:null;
+ s.playersTotal=sourceTotal!==null&&sourceTotal<=1000000?sourceTotal:null;
+ s.playersRemaining=Number.isSafeInteger(s.playersRemaining)&&s.playersRemaining>=0&&
+  s.playersTotal!==null&&s.playersRemaining<=s.playersTotal?s.playersRemaining:null;
  if(s.blindMode!=='preset')s.blindMode='manual';if(!Number.isSafeInteger(s.tableSize)||s.tableSize<2||s.tableSize>10)s.tableSize=10;
 if(!Array.isArray(s.blindLevels))s.blindLevels=[];
 s.blindLevels=s.blindLevels.filter(l=>l&&Number.isSafeInteger(l.sb)&&l.sb>=0&&Number.isSafeInteger(l.bb)&&l.bb>0&&l.sb<=l.bb&&Number.isSafeInteger(l.ante)&&l.ante>=0).slice(0,120).map(l=>({sb:l.sb,bb:l.bb,ante:l.ante}));
@@ -442,6 +474,43 @@ let data;try{const saved=localStorage.getItem(KEY);data=saved?validate(JSON.pars
 function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localOK=true;$('storageWarning').style.display='none'}catch(e){localOK=false;$('storageWarning').style.display='block'} window.dispatchEvent(new Event('stack:changed'));}
 function current(){return data.sessions.find(s=>s.id===data.activeId)||data.sessions[0]}
 function total(s){return s.hands.reduce((a,h)=>a+h.delta,s.startStack)}
+function playersTotal(s){return Number.isSafeInteger(s.playersTotal)&&s.playersTotal>0?s.playersTotal:
+ (Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0?s.shareEntrants:
+ (Number.isSafeInteger(s.result?.players)&&s.result.players>0?s.result.players:null));}
+function playersRemaining(s){return Number.isSafeInteger(s.playersRemaining)&&s.playersRemaining>=0?s.playersRemaining:null;}
+let playersShownSessionId=null;
+function renderPlayers(){
+ const s=current(),remaining=playersRemaining(s),all=playersTotal(s);
+ if(playersShownSessionId!==s.id){
+  playersShownSessionId=s.id;$('playersForm').hidden=true;
+  $('playersEditToggle').setAttribute('aria-expanded','false');
+ }
+ $('playersCountDisplay').textContent=(remaining===null?'—':fmt(remaining))+' / '+(all===null?'—':fmt(all));
+ if(document.activeElement!==$('playersRemainingInput'))$('playersRemainingInput').value=remaining===null?'':remaining;
+ if(document.activeElement!==$('playersTotalInput'))$('playersTotalInput').value=all===null?'':all;
+}
+$('playersEditToggle').addEventListener('click',()=>{
+ const form=$('playersForm');form.hidden=!form.hidden;
+ $('playersEditToggle').setAttribute('aria-expanded',String(!form.hidden));
+ if(!form.hidden){renderPlayers();$('playersRemainingInput').focus();}
+});
+$('playersForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const remainingStr=$('playersRemainingInput').value.trim();
+ const totalStr=$('playersTotalInput').value.trim();
+ const remaining=remainingStr===''?null:cleanInt(remainingStr);
+ const all=totalStr===''?null:cleanInt(totalStr);
+ if((all!==null&&(!Number.isSafeInteger(all)||all<1||all>1000000))||
+    (remaining!==null&&(!Number.isSafeInteger(remaining)||remaining<0||all===null||remaining>all))){
+  toast('Indique un total valide et des joueurs restants entre 0 et ce total');return;
+ }
+ const s=current();s.playersTotal=all;s.shareEntrants=all;s.playersRemaining=remaining;
+ $('shareEntrants').value=all===null?'':all;
+ save();renderPlayers();clearSharePreview();
+ $('playersForm').hidden=true;$('playersEditToggle').setAttribute('aria-expanded','false');
+ toast('Joueurs mis à jour'+(all!==null?' · direct synchronisé si activé':''));
+});
+
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('on'),2800)}
 function pushHand(delta,kind='manual',position=''){ const s=current();if(s.result){toast('Tournoi clôturé : utilise Rouvrir / corriger');return;} const t=total(s);if(!Number.isSafeInteger(delta)||!Number.isSafeInteger(t+delta)){toast('Montant trop élevé');return}if(t+delta<0){toast('Impossible de perdre plus de jetons que ton stack');return}s.hands.push({id:uid(),delta,bb:s.bb,sb:s.sb,ante:s.ante,anteMode:s.anteMode,kind,position,note:$('handNote').value.trim(),createdAt:now()});$('amount').value='';$('handNote').value='';save();render();if(total(s)===0&&!s.result)showFinishOffer();toast(delta===0?'Main enregistrée':(delta>0?'Gain enregistré':'Perte enregistrée'))}
 function handleAmount(sign){const amt=cleanInt($('amount').value);if(!Number.isSafeInteger(amt)||amt<=0){$('amount').focus();toast('Entre un montant positif en jetons');return}pushHand(sign*amt)}
@@ -817,7 +886,7 @@ $('handEditForm').addEventListener('submit',event=>{
  toast(e.mode==='edit'?(propagate?`Blindes corrigées jusqu'à la main ${end}${foldsAdjusted?` · ${foldsAdjusted} fold(s) ajusté(s)`:''}`:'Main corrigée · graphique recalculé'):'Main insérée · graphique recalculé');
 });
 $('olderHands').addEventListener('click',()=>{historyLimit+=30;render()});
-function render(){const s=current(),t=total(s);$('tournamentName').textContent=s.name;renderFinishStatus(s);$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);const played=playedHands(s);$('playedPercent').textContent=s.hands.length?(100*played/s.hands.length).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';$('playedDetail').textContent=fmt(played)+' / '+fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;configureBlindInterface();updateFoldLabel();syncBulkSetup();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
+function render(){const s=current(),t=total(s);renderPlayers();$('tournamentName').textContent=s.name;renderFinishStatus(s);$('startDisplay').textContent=fmt(s.startStack);$('editStartStack').value=s.startStack;$('stackDisplay').textContent=fmt(t);$('bbCount').textContent=(t/s.bb).toLocaleString('fr-FR',{maximumFractionDigits:1})+' BB';const diff=t-s.startStack;$('netDisplay').textContent=(diff>=0?'+':'')+fmt(diff);$('netDisplay').className='val '+(diff>0?'pos':diff<0?'neg':'info');$('handCount').textContent=fmt(s.hands.length);const played=playedHands(s);$('playedPercent').textContent=s.hands.length?(100*played/s.hands.length).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %':'—';$('playedDetail').textContent=fmt(played)+' / '+fmt(s.hands.length);$('blindsDisplay').textContent=fmt(s.sb)+' / '+fmt(s.bb)+' / '+fmt(s.ante)+' ante';$('sbInput').value=s.sb;$('bbInput').value=s.bb;$('anteInput').value=s.ante;$('anteMode').value=s.anteMode;configureBlindInterface();updateFoldLabel();syncBulkSetup();$('undo').disabled=s.hands.length===0;$('countLabel').textContent=s.hands.length+' main'+(s.hands.length>1?'s':'');$('rangeLabel').textContent=s.hands.length?`${s.hands.length} mains`:'Depuis le départ';
 const sel=$('sessions');if(sel.options.length!==data.sessions.length||[...sel.options].some((o,i)=>o.value!==data.sessions[i].id)){sel.replaceChildren();for(const session of data.sessions){const opt=document.createElement('option');opt.value=session.id;opt.textContent=session.name;sel.appendChild(opt)}}sel.value=s.id;
 const hist=$('history');hist.replaceChildren();
 if(historySessionId!==s.id){historySessionId=s.id;historyLimit=30}
@@ -1164,7 +1233,7 @@ function shareFieldValues(){
  const s=current();
  $('shareOutcome').value=Object.hasOwn(SHARE_RESULTS,s.shareOutcome)?s.shareOutcome:'en_cours';
  $('shareRank').value=Number.isSafeInteger(s.shareRank)&&s.shareRank>0?s.shareRank:'';
- $('shareEntrants').value=Number.isSafeInteger(s.shareEntrants)&&s.shareEntrants>0?s.shareEntrants:'';
+ $('shareEntrants').value=playersTotal(s)??'';
  $('sharePrize').value=typeof s.sharePrize==='number'&&Number.isFinite(s.sharePrize)&&s.sharePrize>=0?s.sharePrize:'';
 }
 function shareSyncSession(){
@@ -1179,11 +1248,11 @@ function setShareMetadata(){
  const rank=rankStr===''?null:cleanInt(rankStr);
  const entrants=totalStr===''?null:cleanInt(totalStr);
  const prize=prizeStr===''?null:Number(prizeStr);
- if((rank!==null&&(!Number.isSafeInteger(rank)||rank<1)) || (entrants!==null&&(!Number.isSafeInteger(entrants)||entrants<1)) || (rank!==null&&entrants!==null&&rank>entrants) || (prize!==null&&(!Number.isFinite(prize)||prize<0||prize>1e10))){
+ if((rank!==null&&(!Number.isSafeInteger(rank)||rank<1)) || (entrants!==null&&(!Number.isSafeInteger(entrants)||entrants<1||entrants>1000000)) || (rank!==null&&entrants!==null&&rank>entrants) || (playersRemaining(s)!==null&&(entrants===null||playersRemaining(s)>entrants)) || (prize!==null&&(!Number.isFinite(prize)||prize<0||prize>1e10))){
   toast('Vérifie le classement, les participants et le gain');return false;
  }
  s.shareOutcome=$('shareOutcome').value in SHARE_RESULTS?$('shareOutcome').value:'en_cours';
- s.shareRank=rank;s.shareEntrants=entrants;s.sharePrize=prize;
+ s.shareRank=rank;s.shareEntrants=entrants;s.playersTotal=entrants;s.sharePrize=prize;renderPlayers();
  save();clearSharePreview();return true;
 }
 $('shareToggle').addEventListener('click',()=>{
@@ -1619,15 +1688,15 @@ window.STACKLiveBridge={
   // Valeurs volontairement filtrées pour les spectateurs. Les mains et notes ne partent jamais.
   return {name:s.name.slice(0,80),start:s.startStack,stack:total(s),sb:s.sb,bb:s.bb,
    ante:s.ante,anteMode:s.anteMode,hands:count,played:playedHands(s),
-   finished:!!s.result,points:filtered};
+   finished:!!s.result,playersRemaining:playersRemaining(s),playersTotal:playersTotal(s),points:filtered};
  }
 };
 save();render();setBBScale(bbScale);setGraphMode(graphMode);
 })();
 </script>
 
-<script src="./live-config.js?stack=24.1"></script>
-<script src="./live.js?stack=24.1"></script>
+<script src="./live-config.js?stack=24.3"></script>
+<script src="./live.js?stack=24.3"></script>
 <script>
 /* Installation PWA ; stockage local, sauf partage en direct explicitement activé. */
 (function(){
