@@ -272,7 +272,7 @@ header{margin-bottom:12px}
 </head>
 <body>
 <div class="container">
-<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.7</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
+<header><div class="brand"><img class="brand-app-icon" src="./icons/icon-192-v19.png" alt="" aria-hidden="true"><div><div class="brand-title">STACK<span style="color:var(--green)">.</span><span class="app-build">V24.8</span></div></div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="ghost" id="installApp" type="button" hidden aria-label="Installer STACK sur le téléphone">＋ Installer</button><button class="ghost" id="toggleSettings" type="button" aria-expanded="false">⚙ Réglages</button></div></header>
 <section id="settingsPanel" class="panel settings" aria-label="Réglages">
  <div class="panel-head"><h2>Tournois & sauvegarde</h2></div>
  <form id="startForm" style="margin-bottom:18px">
@@ -368,7 +368,7 @@ header{margin-bottom:12px}
    <div><label for="finishStatus">Résultat</label><select id="finishStatus"><option value="elimine">Éliminé</option><option value="vainqueur">Vainqueur</option><option value="termine">Terminé / autre</option></select></div>
    <div><label for="finishRank">Place finale (pour le bilan PDF)</label><input id="finishRank" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 23"></div>
    <div><label for="finishPlayers">Participants au départ (pour le bilan PDF)</label><input id="finishPlayers" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 320"></div>
-   <p class="full-row small" style="color:var(--sub);margin:-2px 0 3px">Le classement apparaîtra sur les deux pages du PDF : par exemple <strong>7e / 180</strong>. Il reste modifiable après la clôture.</p>
+   <p class="full-row small" style="color:var(--sub);margin:-2px 0 3px">La place est préremplie avec les <strong>joueurs restants</strong> au moment de clôturer (ex. 7 / 180). Tu peux la corriger avant de valider ou plus tard. Si le compteur est à 0 ou absent, renseigne-la manuellement.</p>
    <div class="full-row"><label for="finishNote">Bilan personnel (facultatif)</label><textarea id="finishNote" rows="2" maxlength="600" placeholder="Notes générales sur ce tournoi…"></textarea></div>
   </div>
   <div class="finish-actions"><button type="submit" class="action gain" style="min-height:49px">✓ Clôturer le tournoi</button><button type="button" class="ghost" id="finishCancel">Plus tard</button></div>
@@ -1651,19 +1651,31 @@ function renderFinishStatus(s){
  $('finishAutoHint').textContent=result?'Archivé':total(s)===0?'Stack à zéro':'Clôture manuelle';
  if(opened)$('finishIntro').textContent=result?'Tournoi archivé. Exporte le PDF ou rouvre le tournoi pour continuer.':total(s)===0?'Ton stack est à zéro. Confirme la clôture ou corrige une erreur.':'Tu peux clôturer ce tournoi, même avec des jetons restants.';
 }
+// V24.8 : préremplir la place finale avec le nombre de joueurs restants.
+// Si le compteur n'est pas renseigné ou vaut 0, laisser la place à saisir.
+// La place est un défaut éditable, jamais une valeur imposée au classement.
+function suggestedFinalRank(s){
+ const remaining=playersRemaining(s),entrants=playersTotal(s);
+ return remaining!==null&&remaining>=1&&(entrants===null||remaining<=entrants)?remaining:null;
+}
+function fillNewFinishForm(s){
+ $('finishStatus').value=total(s)===0?'elimine':'termine';
+ $('finishRank').value=suggestedFinalRank(s)??'';
+ $('finishPlayers').value=playersTotal(s)??'';
+ $('finishNote').value='';
+}
 function showFinishOffer(){
  const s=current();if(s.result)return;
  $('finishPanel').hidden=false;
- $('finishStatus').value=total(s)===0?'elimine':'termine';
- $('finishRank').value='';$('finishPlayers').value=playersTotal(s)||'';$('finishNote').value='';
+ fillNewFinishForm(s);
  renderFinishStatus(s);
  $('finishPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 $('finishQuick').addEventListener('click',()=>{
  const s=current();$('finishPanel').hidden=false;
  if(s.result){$('finishStatus').value=s.result.status;$('finishRank').value=s.result.rank||'';
-  $('finishPlayers').value=s.result.players||'';$('finishNote').value=s.result.note||'';
- }else {$('finishStatus').value=total(s)===0?'elimine':'termine';$('finishPlayers').value=playersTotal(s)||'';}
+  $('finishPlayers').value=s.result.players||playersTotal(s)||'';$('finishNote').value=s.result.note||'';
+ }else fillNewFinishForm(s);
  renderFinishStatus(s);$('finishPanel').scrollIntoView({behavior:'smooth',block:'start'});
 });
  $('finishCancel').addEventListener('click',()=>{$('finishPanel').hidden=true});
